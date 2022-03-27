@@ -16,8 +16,9 @@ export class CommunitiesService {
     async insert(name, owner, short_description, description, thumbnail) {
         const member_amount = 0;
         const date = new Date()
+        const report_amount = 0;
 
-        return await this.repository.insert(name, owner, short_description, description, thumbnail, member_amount, date);
+        return await this.repository.insert(name, owner, short_description, description, thumbnail, member_amount, date, report_amount);
     }
 
     async update(communityID, name, short_description, description, thumbnail) {

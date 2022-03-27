@@ -9,17 +9,23 @@ export class EventsRepository {
     constructor(private readonly connection: Connection) {}
     
     async findAll() {
-        return await this.connection.createQueryBuilder(EventsEntity, "events")
+        const events = await this.connection.createQueryBuilder(EventsEntity, "events")
             .leftJoin("events.host", "host")
             .select([
                 "events",
                 "host.id", "host.name", "host.profile_pic"
             ])
             .getMany();
+
+        for (const event of events) {
+            event.id = "event_" + event.id;
+        }
+
+        return events;
     }
 
     async findOne(eventID) {
-        return await this.connection.createQueryBuilder(EventsEntity, "event")
+        const event = await this.connection.createQueryBuilder(EventsEntity, "event")
             .leftJoin("event.host", "host")
             .leftJoin("event.members", "members")
             .leftJoin("members.member", "eventMember")
@@ -31,9 +37,13 @@ export class EventsRepository {
             ])
             .where("event.id = :id", {id: eventID})
             .getOne();
+
+        event.id = "event_" + event.id;
+
+        return event;
     }
 
-    async insert(name, host, body, thumbnail, location, interested_amount, date) {
+    async insert(name, host, body, thumbnail, location, interested_amount, date, report_amount) {
         const insertResult = await this.connection.createQueryBuilder()
             .insert()
             .into(EventsEntity)
@@ -44,7 +54,8 @@ export class EventsRepository {
                     thumbnail: thumbnail,
                     location: location,
                     interested_amount: interested_amount,
-                    date: date
+                    date: date,
+                    report_amount: report_amount
                 }
             ])
             .execute();

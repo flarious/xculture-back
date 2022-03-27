@@ -9,7 +9,7 @@ export class ForumsRepository {
     constructor(private readonly connection: Connection) {}
 
     async getForums() {
-        return await this.connection.createQueryBuilder(ForumEntity, "forums")
+        const forums =  await this.connection.createQueryBuilder(ForumEntity, "forums")
             .leftJoin("forums.author", "forumAuthor")
             .leftJoin("forums.tags", "tags")
             .leftJoin("tags.tag", "tag")
@@ -19,10 +19,16 @@ export class ForumsRepository {
                 "tags", "tag"
             ])
             .getMany();
+
+        for (const forum of forums) {
+            forum.id = "forum_" + forum.id;
+        }
+
+        return forums;
     }
 
     async getForum(forumID) {
-        return await this.connection.createQueryBuilder(ForumEntity, "forum")
+        const forum = await this.connection.createQueryBuilder(ForumEntity, "forum")
             .leftJoin("forum.comments", "comments")
             .leftJoin("forum.author", "forumAuthor")
             .leftJoin("forum.tags", "tags")
@@ -41,9 +47,13 @@ export class ForumsRepository {
             ])
             .where("forum.id = :forumID", { forumID: forumID})
             .getOne();
+
+        forum.id = "forum_" + forum.id;
+
+        return forum;
     }
 
-    async createForum(title, subtitle, author, content, thumbnail_url, incognito, tags, viewed, favorite_amount, date, update_date) {
+    async createForum(title, subtitle, author, content, thumbnail_url, incognito, tags, viewed, favorite_amount, date, update_date, report_amount) {
         const insertResult = await 
             this.connection.createQueryBuilder()
             .insert()
@@ -59,7 +69,8 @@ export class ForumsRepository {
                     viewed: viewed, 
                     favorite_amount: favorite_amount, 
                     date: date, 
-                    update_date: update_date 
+                    update_date: update_date,
+                    report_amount: report_amount
                 }
             ])
             .execute();

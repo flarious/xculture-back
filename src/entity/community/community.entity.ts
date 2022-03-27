@@ -1,4 +1,5 @@
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { ReportEntity } from '../report/report.entity';
 import { UserEntity } from '../users/user.entity';
 import { CommunityMemberEntity } from './communityMember.entity';
 
@@ -7,7 +8,7 @@ import { CommunityMemberEntity } from './communityMember.entity';
 export class CommunityEntity {
     
         @PrimaryGeneratedColumn({ name: "community_id" })
-        id: number;
+        id: string;
 
 
         @Column()
@@ -44,16 +45,9 @@ export class CommunityEntity {
         members: CommunityMemberEntity[];
 
 
-        // @Column({ name: "report_amount" })
-        // amount: number;
+        @Column()
+        report_amount: number;
 
-
-        // @Column({ name: "owner_id" })
-        // id: number;
-
-
-        // @Column({ name: "member_id" })
-        // id: number;
-
-
+        @OneToMany(() => ReportEntity, report => report.reportCommu)
+        reports: ReportEntity[];
 }

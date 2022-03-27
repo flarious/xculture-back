@@ -8,6 +8,9 @@ import { EventsEntity } from "src/entity/events/events.entity";
 import { ForumEntity } from "src/entity/forum/forum.entity";
 import { ForumTagEntity } from "src/entity/forum/forumTag.entity";
 import { ReplyEntity } from "src/entity/reply/reply.entity";
+import { ReportEntity } from "src/entity/report/report.entity";
+import { ReportCategoryEntity } from "src/entity/report/reportCategory.entity";
+import { ReportTopicEntity } from "src/entity/report/reportTopic.entity";
 import { TagEntity } from "src/entity/tags/tag.entity";
 import { UserEntity } from "src/entity/users/user.entity";
 import { UserTagEntity } from "src/entity/users/userTag.entity";
@@ -36,6 +39,9 @@ export class typeOrmConfigService implements TypeOrmOptionsFactory {
             CommunityMemberEntity,
             EventsEntity,
             EventMemberEntity,
+            ReportEntity,
+            ReportTopicEntity,
+            ReportCategoryEntity
         ]     // Table(s) we want to use
       }
   }
