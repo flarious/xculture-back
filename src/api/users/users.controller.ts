@@ -38,23 +38,28 @@ export class UsersController {
         return await this.service.getUserForums(request['user'].id);
     }
 
+    @Get("/events")
+    async getUserEvents (
+        @Req() request: Request,
+    ) {
+        return await this.service.getUserEvents(request['user'].id);
+    }
+
+    @Get("/communities")
+    async getUserCommunities (
+        @Req() request: Request,
+    ) {
+        return await this.service.getUserCommunities(request['user'].id);
+    }
+
     @Put("/unban")
     async banExpired (
         @Req() request: Request,
     ) {
         await this.service.banExpired(request['user'].id);
     }
+
 /*
-    @Get("/events")
-    async getUserEvents () {
-
-    }
-
-    @Get("/communities")
-    async getUserCommunities () {
-
-    }
-
     @Get("/setting")
     async getUserSetting () {
 
