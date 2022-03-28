@@ -4,6 +4,7 @@ import { EventsEntity } from "src/entity/events/events.entity";
 import { ForumEntity } from "src/entity/forum/forum.entity";
 import { UserEntity } from "src/entity/users/user.entity";
 import { Connection } from "typeorm";
+import { TagsRepository } from "./tags.repository";
 
 @Injectable()
 export class UserRepository {
@@ -16,7 +17,9 @@ export class UserRepository {
             .leftJoin("app_user.userReplies", "replies")
             .leftJoin("app_user.userCommunities", "communities")
             .leftJoin("app_user.memberCommunities", "members")
-            .select(["app_user", "forums", "comments", "replies", "communities", "members"])
+            .leftJoin("app_user.tags", "tags")
+            .leftJoin("tags.tag", "tag")
+            .select(["app_user", "forums", "comments", "replies", "communities", "members", "tags", "tag"])
             .where("app_user.id = :id", {id: uid})
             .getOne();
             
@@ -41,7 +44,7 @@ export class UserRepository {
 
     }
 
-    async update(uid: string, name: string, profile_pic: string, bio: string) {
+    async update(uid: string, name: string, profile_pic: string, bio: string, tags) {
         await this.connection.createQueryBuilder()
             .update(UserEntity)
             .set(
@@ -53,6 +56,9 @@ export class UserRepository {
             )
             .where("user_id = :id", {id: uid})
             .execute();
+
+        const TagRepository = new TagsRepository(this.connection);
+        await TagRepository.changeTags("user_" + uid, tags);
     }
 
     async banExpired(uid) {
