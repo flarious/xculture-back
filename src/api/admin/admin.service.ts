@@ -33,9 +33,11 @@ export class AdminService {
         return await this.repository.findOneReportedCommunity(id)
     }
 
+    /*
     async ban(id) {
         await this.repository.ban(id);
     }
+    */
 
     async delete(id) {
         await this.repository.delete(id);

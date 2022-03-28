@@ -10,6 +10,8 @@ export class ForumsService {
     }
 
     async getForum(forumID) {
+        forumID = forumID.split("_")[1];
+
         return await this.repository.getForum(forumID);
     }
 
@@ -24,19 +26,26 @@ export class ForumsService {
 
     async updateForum(forumID, title, subtitle, content, thumbnail_url, incognito, tags) {
         const update_date = new Date();
+        forumID = forumID.split("_")[1];
 
         await this.repository.updateForum(forumID, title, subtitle, content, thumbnail_url, incognito, tags, update_date);
     }
 
     async updateForumView(forumID) {
+        forumID = forumID.split("_")[1];
+
         await this.repository.updateForumView(forumID);
     }
 
     async forumFavorite(forumID) {
+        forumID = forumID.split("_")[1];
+
         await this.repository.forumFavorite(forumID);
     }
 
     async forumUnfavorite(forumID) {
+        forumID = forumID.split("_")[1];
+
         await this.repository.forumUnfavorite(forumID);
     }
 }

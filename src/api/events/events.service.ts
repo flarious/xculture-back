@@ -10,6 +10,8 @@ export class EventsService {
     }
 
     async findOne(eventID) {
+        eventID = eventID.split("_")[1];
+
         return await this.repository.findOne(eventID);
     }
 
@@ -25,15 +27,20 @@ export class EventsService {
     async update(eventID, name, body, thumbnail, location, date) {
         const temp = date.split('/').reverse();
         const eventDate = new Date(parseInt(temp[0]), parseInt(temp[1]) - 1, parseInt(temp[2]));
+        eventID = eventID.split("_")[1];
         
         await this.repository.update(eventID, name, body, thumbnail, location, eventDate);
     }
 
     async join(eventID, member) {
+        eventID = eventID.split("_")[1];
+        
         await this.repository.join(eventID, member);
     }
 
     async unjoin(eventID, member) {
+        eventID = eventID.split("_")[1];
+
         await this.repository.unjoin(eventID, member);
     }
 }

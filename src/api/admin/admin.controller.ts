@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Put } from "@nestjs/common";
+import { Controller, Delete, Get, Param } from "@nestjs/common";
 import { AdminService } from "./admin.service";
 
 @Controller("/admins")
@@ -41,12 +41,14 @@ export class AdminController {
         return await this.service.findOneReportedCommunity(id);
     }
 
+    /*
     @Put(":id")
     async ban(
         @Param("id") id: string
     ) {
         await this.service.ban(id);
     }
+    */
 
     @Delete(":id")
     async delete(

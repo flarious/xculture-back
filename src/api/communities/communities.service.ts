@@ -10,6 +10,8 @@ export class CommunitiesService {
     }
 
     async findOne(communityID) {
+        communityID = communityID.split("_")[1];
+
         return await this.repository.findOne(communityID);
     }
 
@@ -22,14 +24,20 @@ export class CommunitiesService {
     }
 
     async update(communityID, name, short_description, description, thumbnail) {
+        communityID = communityID.split("_")[1];
+
         return await this.repository.update(communityID, name, short_description, description, thumbnail);
     }
 
     async joinCommunity(communityID, member) {
+        communityID = communityID.split("_")[1];
+
         return await this.repository.joinCommunity(communityID, member);
     }
 
     async unjoinCommunity(communityID, member) {
+        communityID = communityID.split("_")[1];
+
         return await this.repository.unjoinCommunity(communityID, member);
     }
 }
