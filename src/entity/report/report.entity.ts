@@ -1,30 +1,49 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { CommunityEntity } from '../community/community.entity';
+import { EventsEntity } from '../events/events.entity';
+import { ForumEntity } from '../forum/forum.entity';
+import { UserEntity } from '../users/user.entity';
+import { ReportTopicEntity } from './reportTopic.entity';
 
-@Entity('report')              // create a table name events
+@Entity("report_card")
 export class ReportEntity {
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @OneToMany(() => ReportTopicEntity, reportTopic => reportTopic.report)
+    topics: ReportTopicEntity[];
+
+    @Column()
+    detail: string;
+
+    @Column()
+    reportDate: Date;
     
-        @PrimaryGeneratedColumn({ name: "report_id" })
-        id: number;
+    @ManyToOne(() => UserEntity, user => user.reports) 
+    reporter: UserEntity;
 
+    @ManyToOne(() => ForumEntity, forum => forum.reports)
+    reportForum: ForumEntity;
 
-        @Column()
-        report_categories: string;
+    @ManyToOne(() => EventsEntity, event => event.reports)
+    reportEvent: EventsEntity;
+    
+    @ManyToOne(() => CommunityEntity, community => community.reports)
+    reportCommu: CommunityEntity;
 
+    @Column({
+        type: 'enum',
+        enum: ["forum", "event", "community"]
+    })
+    reportedType: string;
 
-        @Column()
-        Add_Detail: string;
+    @Column({
+        type: 'enum',
+        enum: ["pending", "banned", "unbanned"],
+        default: "pending"
+    })
+    approveStatus: string;
 
-
-        @Column()
-        User_ID: number;
-
-
-        @Column()
-        Target_ID: number;
-
-
-        @Column()
-        Target_Type: string;
-
-
+    @Column()
+    approveDate: Date;
 }

@@ -17,8 +17,9 @@ export class EventsService {
         const interested_amount = 0;
         const temp = date.split('/').reverse();
         const eventDate = new Date(parseInt(temp[0]), parseInt(temp[1]) - 1, parseInt(temp[2]));
+        const report_amount = 0;
 
-        await this.repository.insert(name, host, body, thumbnail, location, interested_amount, eventDate);
+        await this.repository.insert(name, host, body, thumbnail, location, interested_amount, eventDate, report_amount);
     }
 
     async update(eventID, name, body, thumbnail, location, date) {

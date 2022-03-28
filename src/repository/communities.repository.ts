@@ -9,17 +9,23 @@ export class CommunitiesRepository {
     constructor(private readonly connection: Connection) {}
 
     async findAll() {
-        return await this.connection.createQueryBuilder(CommunityEntity, "communities")
+        const commus = await this.connection.createQueryBuilder(CommunityEntity, "communities")
             .leftJoin("communities.owner", "owner")
             .select([
                 "communities", 
                 "owner.id", "owner.name", "owner.profile_pic"
             ])
             .getMany();
+
+        for (const commu of commus) {
+            commu.id = "community_" + commu.id
+        }
+
+        return commus;
     }
 
     async findOne(communityID) {
-        return await this.connection.createQueryBuilder(CommunityEntity, "community")
+        const commu = await this.connection.createQueryBuilder(CommunityEntity, "community")
             .leftJoin("community.owner", "owner")
             .leftJoin("community.members", "members")
             .leftJoin("members.member", "member")
@@ -31,9 +37,13 @@ export class CommunitiesRepository {
             ])
             .where("community.id = :id", {id: communityID})
             .getOne();
+
+        commu.id = "community_" + commu.id;
+
+        return commu;
     }
 
-    async insert(name, owner, shortdesc, desc, thumbnail, member_amount, date) {
+    async insert(name, owner, shortdesc, desc, thumbnail, member_amount, date, report_amount) {
         const insertResult = await this.connection.createQueryBuilder()
             .insert()
             .into(CommunityEntity)
@@ -44,7 +54,8 @@ export class CommunitiesRepository {
                     desc: desc,
                     thumbnail: thumbnail,
                     member_amount: member_amount,
-                    date: date
+                    date: date,
+                    report_amount: report_amount
                 }
             ])
             .execute();

@@ -37,6 +37,13 @@ export class UsersController {
     ) {
         return await this.service.getUserForums(request['user'].id);
     }
+
+    @Put("/unban")
+    async banExpired (
+        @Req() request: Request,
+    ) {
+        await this.service.banExpired(request['user'].id);
+    }
 /*
     @Get("/events")
     async getUserEvents () {

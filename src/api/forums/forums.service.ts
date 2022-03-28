@@ -17,8 +17,9 @@ export class ForumsService {
         const favorite_amount = 0;
         const viewed = 0;
         const date = new Date();
+        const report_amount = 0;
 
-        await this.repository.createForum(title, subtitle, author, content, thumbnail_url, incognito, tags, viewed, favorite_amount, date, date);
+        await this.repository.createForum(title, subtitle, author, content, thumbnail_url, incognito, tags, viewed, favorite_amount, date, date, report_amount);
     }
 
     async updateForum(forumID, title, subtitle, content, thumbnail_url, incognito, tags) {

@@ -6,6 +6,7 @@ import { EventMemberEntity } from '../events/eventMember.entity';
 import { EventsEntity } from '../events/events.entity';
 import { ForumEntity } from '../forum/forum.entity';
 import { ReplyEntity } from '../reply/reply.entity';
+import { ReportEntity } from '../report/report.entity';
 import { UserTagEntity } from './userTag.entity';
 
 
@@ -32,12 +33,15 @@ export class UserEntity {
         bio: string;
 
 
-        @Column()
-        score: number;
+        @Column({
+                type: 'enum',
+                enum: ["normal", "banned", "admin"],
+                default: "normal"
+        })
+        userType: string;
 
-
-        // @Column()
-        // type_enum: string;
+        @OneToMany(() => UserTagEntity, userTag => userTag.user)
+        tags: UserEntity[];
 
         @OneToMany(() => ForumEntity, forum => forum.author)
         userForums: ForumEntity[];
@@ -47,9 +51,6 @@ export class UserEntity {
 
         @OneToMany(() => ReplyEntity, reply => reply.author)
         userReplies: ReplyEntity[];
-
-        @OneToMany(() => UserTagEntity, userTag => userTag.user)
-        tags: UserEntity[];
 
         @OneToMany(() => CommunityEntity, community => community.owner)
         userCommunities: CommunityEntity[];
@@ -62,4 +63,13 @@ export class UserEntity {
 
         @OneToMany(() => EventMemberEntity, member => member.member)
         memberEvents: EventMemberEntity[];
+
+        @OneToMany(() => ReportEntity, report => report.reporter) 
+        reports: ReportEntity[];
+
+        @Column()
+        banned_amount: number;
+
+        @Column()
+        last_banned: Date;
 }

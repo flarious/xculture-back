@@ -1,4 +1,5 @@
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { ReportEntity } from '../report/report.entity';
 import { UserEntity } from '../users/user.entity';
 import { EventMemberEntity } from './eventMember.entity';
 
@@ -7,7 +8,7 @@ import { EventMemberEntity } from './eventMember.entity';
 export class EventsEntity {
     
         @PrimaryGeneratedColumn({ name: "event_id" })
-        id: number;
+        id: string;
 
         @Column()
         date: Date;
@@ -39,14 +40,10 @@ export class EventsEntity {
         @OneToMany(() => EventMemberEntity, member => member.event)
         members: EventMemberEntity[];
 
+        @Column()
+        report_amount: number;
 
-        // @Column()
-        // report_amount: number;
-
-
-        // @Column({ name: "user_id" })
-        // id: number;
-
-
+        @OneToMany(() => ReportEntity, report => report.reportEvent)
+        reports: ReportEntity[];
 
 }

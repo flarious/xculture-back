@@ -1,16 +1,20 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AdminMiddleware } from './api/admin/admin.middleware';
+import { AdminModule } from './api/admin/admin.module';
 import { CommentsModule } from './api/comments/comments.module';
 import { CommunitiesModule } from './api/communities/communities.module';
 import { EventsModule } from './api/events/events.module';
 import { ForumsModule } from './api/forums/forums.module';
 import { RepliesModule } from './api/replies/replies.module';
+import { ReportModule } from './api/report/report.module';
 import { TagsModule } from './api/tags/tags.module';
 import { UsersModule } from './api/users/users.module';
 import { PreAuthMiddleware } from './auth/auth.middleware';
 import { FirebaseService } from './auth/firebase.service';
 import { typeOrmConfigService } from './configs/ormconfig';
+
 
 
 @Module({
@@ -29,6 +33,8 @@ import { typeOrmConfigService } from './configs/ormconfig';
     UsersModule,
     CommunitiesModule,
     EventsModule,
+    ReportModule,
+    AdminModule,
   ],
   providers: [
     FirebaseService
@@ -40,6 +46,10 @@ export class AppModule implements NestModule {
       path: '/user**',
       method: RequestMethod.ALL,
     });
+    consumer.apply(PreAuthMiddleware, AdminMiddleware).forRoutes({
+      path: '/admins**',
+      method: RequestMethod.ALL,
+    })
     consumer.apply(PreAuthMiddleware).forRoutes({
       path: '/**',
       method: RequestMethod.POST,

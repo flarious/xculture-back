@@ -21,7 +21,7 @@ export class UserRepository {
         return user;
     }
 
-    async insert(uid: string, email: string, name: string, profile_pic: string, bio: string, score: number){
+    async insert(uid: string, email: string, name: string, profile_pic: string, bio: string, banned_amount: number){
         await this.connection.createQueryBuilder()
             .insert().into(UserEntity)
             .values(
@@ -31,7 +31,8 @@ export class UserRepository {
                     name: name,
                     profile_pic: profile_pic,
                     bio: bio,
-                    score: score
+                    banned_amount: banned_amount,
+                    last_banned: new Date()
                 }
             )
             .execute();
@@ -50,6 +51,24 @@ export class UserRepository {
             )
             .where("user_id = :id", {id: uid})
             .execute();
+    }
+
+    async banExpired(uid) {
+        const base_banned_time = 1;
+        const banned_amount = await this.connection.createQueryBuilder(UserEntity, "user")
+        .select(["user.banned_amount"])
+        .where("user.id = :id", {id: uid})
+        .getOne();
+        
+        await this.connection.createQueryBuilder()
+        .update(UserEntity)
+        .set({
+                userType: "normal"
+        })
+        .where("user_id = :id", {id: uid})
+        .andWhere("userType = :type", {type: "banned"})
+        .andWhere("last_banned < NOW() - INTERVAL :banned_length HOUR", {banned_length: base_banned_time * banned_amount.banned_amount})
+        .execute();
     }
 
     async getUserForums(uid: string) {
