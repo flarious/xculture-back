@@ -75,7 +75,7 @@ export class ForumsRepository {
             ])
             .execute();
         
-        const newForumID = insertResult.identifiers[0].id;
+        const newForumID = "forum_" + insertResult.identifiers[0].id;
 
         await this.connection.createQueryBuilder()
             .relation(UserEntity, "userForums")
@@ -103,7 +103,7 @@ export class ForumsRepository {
             .execute();
         
         const TagRepository = new TagsRepository(this.connection);
-        TagRepository.changeTags(forumID, tags);
+        await TagRepository.changeTags("forum_" + forumID, tags);
 
     }
 

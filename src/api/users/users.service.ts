@@ -17,8 +17,8 @@ export class UsersService {
         return await this.repository.insert(uid, email, name, profile_pic, bio, banned_amount);
     }
 
-    async update(uid: string, name: string, profile_pic: string, bio: string) {
-        return await this.repository.update(uid, name, profile_pic, bio);
+    async update(uid: string, name: string, profile_pic: string, bio: string, tags) {
+        return await this.repository.update(uid, name, profile_pic, bio, tags);
     }
 
     async getUserForums(uid: string) {

@@ -27,8 +27,9 @@ export class UsersController {
         @Body("name") name: string,
         @Body("profile_pic") profile_pic: string,
         @Body("bio") bio: string,
+        @Body("tags") tags: string[],
     ) {
-        await this.service.update(request['user'].id, name, profile_pic, bio);
+        await this.service.update(request['user'].id, name, profile_pic, bio, tags);
     }
 
     @Get("/forums")
