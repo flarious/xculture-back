@@ -1,11 +1,14 @@
 import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
 import { CommentsEntity } from '../comment/comment.entity';
+import { UserFavoriteCommentEntity } from '../comment/commentFavorited.entity';
 import { CommunityEntity } from '../community/community.entity';
 import { CommunityMemberEntity } from '../community/communityMember.entity';
 import { EventMemberEntity } from '../events/eventMember.entity';
 import { EventsEntity } from '../events/events.entity';
 import { ForumEntity } from '../forum/forum.entity';
+import { UserFavoriteForumEntity } from '../forum/forumFavorited.entity';
 import { ReplyEntity } from '../reply/reply.entity';
+import { UserFavoriteReplyEntity } from '../reply/replyFavorited.entity';
 import { ReportEntity } from '../report/report.entity';
 import { UserTagEntity } from './userTag.entity';
 
@@ -46,11 +49,20 @@ export class UserEntity {
         @OneToMany(() => ForumEntity, forum => forum.author)
         userForums: ForumEntity[];
 
+        @OneToMany(() => UserFavoriteForumEntity, favoriteForums => favoriteForums.user)
+        favoritedForums: UserFavoriteForumEntity[];
+
         @OneToMany(() => CommentsEntity, comment => comment.author)
         userComments: CommentsEntity[];
 
+        @OneToMany(() => UserFavoriteCommentEntity, favoriteComments => favoriteComments.user)
+        favoritedComments: UserFavoriteForumEntity[];
+
         @OneToMany(() => ReplyEntity, reply => reply.author)
         userReplies: ReplyEntity[];
+
+        @OneToMany(() => UserFavoriteReplyEntity, favoriteReplies => favoriteReplies.user)
+        favoritedReplies: UserFavoriteForumEntity[];
 
         @OneToMany(() => CommunityEntity, community => community.owner)
         userCommunities: CommunityEntity[];

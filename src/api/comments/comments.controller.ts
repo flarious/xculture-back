@@ -25,32 +25,21 @@ export class CommentsController {
     ) {
         await this.service.updateComment(commentID, body, incognito);
     }
-
-
-    /*
-    @Get("/:commentID/report")
-    async getReportDetail() {
-
-    }
-
-    @Post("/:commentID/report")
-    async reportComment() {
-
-    }
-    */
     
     @Put("/:commentID/favorite")
     async favoriteComment(
+        @Req() request: Request,
         @Param("commentID") commentID: number
     ) {
-        await this.service.favoriteComment(commentID)
+        await this.service.favoriteComment(commentID, request['user'].id);
     }
 
     @Put("/:commentID/unfavorite")
     async unfavoriteComment (
+        @Req() request: Request,
         @Param("commentID") commentID: number
     ) {
-        await this.service.unfavoriteComment(commentID)
+        await this.service.unfavoriteComment(commentID, request['user'].id);
     }
     
 }

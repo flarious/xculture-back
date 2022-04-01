@@ -128,14 +128,18 @@ export class CommunitiesRepository {
 
         
         const communityMember = await this.connection.createQueryBuilder(CommunityMemberEntity, "communityMember")
-                .where("communityMember.member = :id", {id: member})
-                .getOne();
+            .select("communityMember.id")
+            .where("communityMember.member = :member_id", {member_id: member})
+            .andWhere("communityMember.community = :community_id", {community_id: communityID})
+            .getOne();
+    
 
         await this.connection.createQueryBuilder()
             .delete()
             .from(CommunityMemberEntity)
             .where("community = :community", {community : communityID})
             .andWhere("member = :member", {member : member})
+            .where("id = :id", {id: communityMember.id})
             .execute();
 
         await this.connection.createQueryBuilder()

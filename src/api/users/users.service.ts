@@ -25,12 +25,24 @@ export class UsersService {
         return await this.repository.getUserForums(uid);
     }
 
+    async getUserFavoritedForums(uid: string) {
+        return await this.repository.getUserFavoritedForums(uid);
+    }
+
     async getUserEvents(uid: string) {
         return await this.repository.getUserEvents(uid);
     }
 
+    async getUserInterestedEvents(uid: string) {
+        return await this.repository.getUserInterestedEvents(uid);
+    }
+
     async getUserCommunities(uid: string) {
         return await this.repository.getUserCommunities(uid);
+    }
+
+    async getUserJoinedCommunities(uid: string) {
+        return await this.repository.getUserJoinedCommunities(uid);
     }
 
     async banExpired(uid) {

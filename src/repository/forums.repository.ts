@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { ForumEntity } from "src/entity/forum/forum.entity";
+import { UserFavoriteForumEntity } from "src/entity/forum/forumFavorited.entity";
 import { UserEntity } from "src/entity/users/user.entity";
 import { Connection } from "typeorm";
 import { TagsRepository } from "./tags.repository";
@@ -29,21 +30,33 @@ export class ForumsRepository {
 
     async getForum(forumID) {
         const forum = await this.connection.createQueryBuilder(ForumEntity, "forum")
-            .leftJoin("forum.comments", "comments")
             .leftJoin("forum.author", "forumAuthor")
             .leftJoin("forum.tags", "tags")
+            .leftJoin("forum.favoritedBy", "forumFavoritedBy")
+            .leftJoin("forumFavoritedBy.user", "favoritedForumUser")
+            .leftJoin("forum.comments", "comments")
             .leftJoin("comments.author", "commentAuthor")
+            .leftJoin("comments.favoritedBy", "commentFavoritedBy")
+            .leftJoin("commentFavoritedBy.user", "favoritedCommentUser")
             .leftJoin("comments.replies", "replies")
             .leftJoin("replies.author", "replyAuthor")
+            .leftJoin("replies.favoritedBy", "replyFavoritedBy")
+            .leftJoin("replyFavoritedBy.user", "favoritedReplyUser")
             .leftJoin("tags.tag", "tag")
             .select([
                 "forum", 
                 "forumAuthor.id", "forumAuthor.name", "forumAuthor.profile_pic",
                 "tags", "tag",
+                "forumFavoritedBy",
+                "favoritedForumUser.id",
                 "comments", 
                 "commentAuthor.id", "commentAuthor.name", "commentAuthor.profile_pic", 
+                "commentFavoritedBy",
+                "favoritedCommentUser.id",
                 "replies", 
-                "replyAuthor.id", "replyAuthor.name", "replyAuthor.profile_pic"
+                "replyAuthor.id", "replyAuthor.name", "replyAuthor.profile_pic",
+                "replyFavoritedBy",
+                "favoritedReplyUser.id"
             ])
             .where("forum.id = :forumID", { forumID: forumID})
             .getOne();
@@ -75,7 +88,7 @@ export class ForumsRepository {
             ])
             .execute();
         
-        const newForumID = "forum_" + insertResult.identifiers[0].id;
+        const newForumID = insertResult.identifiers[0].id;
 
         await this.connection.createQueryBuilder()
             .relation(UserEntity, "userForums")
@@ -83,7 +96,7 @@ export class ForumsRepository {
             .add(newForumID);
 
         const TagRepository = new TagsRepository(this.connection);
-        TagRepository.useTags(newForumID, tags);
+        TagRepository.useTags("forum_" + newForumID, tags);
     }
     
     async updateForum(forumID, title, subtitle, content, thumbnail_url, incognito, tags, update_date) {
@@ -118,7 +131,7 @@ export class ForumsRepository {
 
     }
 
-    async forumFavorite(forumID) {
+    async forumFavorite(forumID, user) {
         await this.connection.createQueryBuilder()
             .update(ForumEntity)
             .set(
@@ -127,9 +140,27 @@ export class ForumsRepository {
             .where("forum_id = :forum_id", {forum_id: forumID})
             .execute();
 
+            const favorite = await this.connection.createQueryBuilder()
+            .insert()
+            .into(UserFavoriteForumEntity)
+            .values({})
+            .execute();
+    
+            const favoriteForumId = favorite.identifiers[0].id;
+    
+            await this.connection.createQueryBuilder()
+            .relation(UserEntity, "favoritedForums")
+            .of(user)
+            .add(favoriteForumId)
+    
+            await this.connection.createQueryBuilder()
+            .relation(ForumEntity, "favoritedBy")
+            .of(forumID)
+            .add(favoriteForumId);
+
     }
 
-    async forumUnfavorite(forumID) {
+    async forumUnfavorite(forumID, user) {
         await this.connection.createQueryBuilder()
             .update(ForumEntity)
             .set(
@@ -138,5 +169,26 @@ export class ForumsRepository {
             .where("forum_id = :forum_id", {forum_id: forumID})
             .execute();
 
+        const unfavoriteForum = await this.connection.createQueryBuilder(UserFavoriteForumEntity, "favoritedForum")
+            .select("favoritedForum.id")
+            .where("favoritedForum.forum = :forum_id", {forum_id: forumID})
+            .andWhere("favoritedForum.user = :user_id", {user_id: user})
+            .getOne();
+    
+        await this.connection.createQueryBuilder()
+            .delete()
+            .from(UserFavoriteForumEntity)
+            .where("id = :id", {id: unfavoriteForum.id})
+            .execute();
+    
+        await this.connection.createQueryBuilder()
+            .relation(UserEntity, "favoritedForums")
+            .of(user)
+            .remove(unfavoriteForum.id);
+    
+        await this.connection.createQueryBuilder()
+            .relation(ForumEntity, "favoritedBy")
+            .of(forumID)
+            .remove(unfavoriteForum.id);    
     }
 }

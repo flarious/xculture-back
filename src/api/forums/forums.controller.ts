@@ -46,13 +46,19 @@ export class ForumsController {
     }
 
     @Put("/:forumID/favorite")
-    async favoriteForum(@Param("forumID") forumID: number) {
-        await this.service.forumFavorite(forumID);
+    async favoriteForum(
+        @Req() request: Request,
+        @Param("forumID") forumID: number
+    ) {
+        await this.service.forumFavorite(forumID, request['user'].id);
     }
 
     @Put("/:forumID/unfavorite")
-    async unfavoriteForum(@Param("forumID") forumID: number) {
-        await this.service.forumUnfavorite(forumID);
+    async unfavoriteForum(
+        @Req() request: Request,
+        @Param("forumID") forumID: number
+    ) {
+        await this.service.forumUnfavorite(forumID, request['user'].id);
     }
 
     @Put("/:forumID/viewed")

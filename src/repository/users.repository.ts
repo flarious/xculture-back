@@ -99,6 +99,28 @@ export class UserRepository {
         return forums;
     }
 
+    async getUserFavoritedForums(uid: string) {
+        const forums =  await this.connection.createQueryBuilder(ForumEntity, "forums")
+            .leftJoin("forums.author", "forumAuthor")
+            .leftJoin("forums.favoritedBy", "favoritedBy")
+            .leftJoin("favoritedBy.user", "userFavorited")
+            .leftJoin("forums.tags", "tags")
+            .leftJoin("tags.tag", "tag")
+            .select([
+                "forums", 
+                "forumAuthor.id", "forumAuthor.name", "forumAuthor.profile_pic", 
+                "tags", "tag"
+            ])
+            .where("userFavorited.id = :id", {id: uid})
+            .getMany();
+
+        for (const forum of forums) {
+            forum.id = "forum_" + forum.id;
+        }
+
+        return forums;
+    }
+
     async getUserEvents(uid: string) {
         const events = await this.connection.createQueryBuilder(EventsEntity, "events")
             .leftJoin("events.host", "host")
@@ -116,6 +138,25 @@ export class UserRepository {
         return events;
     }
 
+    async getUserInterestedEvents(uid: string) {
+        const events = await this.connection.createQueryBuilder(EventsEntity, "events")
+            .leftJoin("events.host", "host")
+            .leftJoin("events.members", "members")
+            .leftJoin("members.member", "userInterested")
+            .select([
+                "events",
+                "host.id", "host.name", "host.profile_pic"
+            ])
+            .where("userInterested.id = :id", {id: uid})
+            .getMany();
+
+        for (const event of events) {
+            event.id = "event_" + event.id;
+        }
+
+        return events;
+    }
+
     async getUserCommunities(uid: string) {
         const commus = await this.connection.createQueryBuilder(CommunityEntity, "communities")
             .leftJoin("communities.owner", "owner")
@@ -124,6 +165,25 @@ export class UserRepository {
                 "owner.id", "owner.name", "owner.profile_pic"
             ])
             .where("owner.id = :id", {id: uid})
+            .getMany();
+
+        for (const commu of commus) {
+            commu.id = "community_" + commu.id
+        }
+
+        return commus;
+    }
+
+    async getUserJoinedCommunities(uid: string) {
+        const commus = await this.connection.createQueryBuilder(CommunityEntity, "communities")
+            .leftJoin("communities.owner", "owner")
+            .leftJoin("communities.members", "members")
+            .leftJoin("members.member", "userJoined")
+            .select([
+                "communities", 
+                "owner.id", "owner.name", "owner.profile_pic"
+            ])
+            .where("userJoined.id = :id", {id: uid})
             .getMany();
 
         for (const commu of commus) {

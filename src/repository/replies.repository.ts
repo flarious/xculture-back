@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { CommentsEntity } from "src/entity/comment/comment.entity";
 import { ReplyEntity } from "src/entity/reply/reply.entity";
+import { UserFavoriteReplyEntity } from "src/entity/reply/replyFavorited.entity";
 import { UserEntity } from "src/entity/users/user.entity";
 import { Connection } from "typeorm";
 
@@ -47,7 +48,7 @@ export class RepliesRepository {
                     .add(newReplyID);
     }
 
-    async favoriteReply(replyID) {
+    async favoriteReply(replyID, user) {
         await this.connection.createQueryBuilder()
                 .update(ReplyEntity)
                 .set(
@@ -55,9 +56,27 @@ export class RepliesRepository {
                 )
                 .where("reply_id = :reply_id", {reply_id : replyID})
                 .execute();
+
+        const favorite = await this.connection.createQueryBuilder()
+        .insert()
+        .into(UserFavoriteReplyEntity)
+        .values({})
+        .execute();
+
+        const favoriteReplyId = favorite.identifiers[0].id;
+
+        await this.connection.createQueryBuilder()
+        .relation(UserEntity, "favoritedReplies")
+        .of(user)
+        .add(favoriteReplyId);
+
+        await this.connection.createQueryBuilder()
+        .relation(ReplyEntity, "favoritedBy")
+        .of(replyID)
+        .add(favoriteReplyId);
     }
 
-    async unfavoriteReply(replyID) {
+    async unfavoriteReply(replyID, user) {
         await this.connection.createQueryBuilder()
                 .update(ReplyEntity)
                 .set(
@@ -65,6 +84,28 @@ export class RepliesRepository {
                 )
                 .where("reply_id = :reply_id", {reply_id : replyID})
                 .execute();
+
+        const unfavoriteReply = await this.connection.createQueryBuilder(UserFavoriteReplyEntity, "favoritedReply")
+        .select("favoritedReply.id")
+        .where("favoritedReply.reply = :reply_id", {reply_id: replyID})
+        .andWhere("favoritedReply.user = :user_id", {user_id: user})
+        .getOne();
+
+        await this.connection.createQueryBuilder()
+        .delete()
+        .from(UserFavoriteReplyEntity)
+        .where("id = :id", {id: unfavoriteReply.id})
+        .execute();
+
+        await this.connection.createQueryBuilder()
+        .relation(UserEntity, "favoritedReplies")
+        .of(user)
+        .remove(unfavoriteReply.id);
+
+        await this.connection.createQueryBuilder()
+        .relation(ReplyEntity, "favoritedBy")
+        .of(replyID)
+        .remove(unfavoriteReply.id);
     }
 
     async updateReply(replyID, body, incognito, update_date) {

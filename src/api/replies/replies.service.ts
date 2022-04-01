@@ -12,12 +12,12 @@ export class RepliesService {
         await this.repository.replyComment(commentID, author, body, incognito, favorited, date, date);
     }
 
-    async favoriteReply(replyID) {
-        await this.repository.favoriteReply(replyID);
+    async favoriteReply(replyID, user) {
+        await this.repository.favoriteReply(replyID, user);
     }
 
-    async unfavoriteReply(replyID) {
-        await this.repository.unfavoriteReply(replyID);
+    async unfavoriteReply(replyID, user) {
+        await this.repository.unfavoriteReply(replyID, user);
     }
 
     async updateReply(replyID, body, incognito) {
