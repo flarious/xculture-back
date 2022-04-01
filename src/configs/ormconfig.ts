@@ -1,13 +1,16 @@
 import { Injectable } from "@nestjs/common";
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from "@nestjs/typeorm";
 import { CommentsEntity } from "src/entity/comment/comment.entity";
+import { UserFavoriteCommentEntity } from "src/entity/comment/commentFavorited.entity";
 import { CommunityEntity } from "src/entity/community/community.entity";
 import { CommunityMemberEntity } from "src/entity/community/communityMember.entity";
 import { EventMemberEntity } from "src/entity/events/eventMember.entity";
 import { EventsEntity } from "src/entity/events/events.entity";
 import { ForumEntity } from "src/entity/forum/forum.entity";
+import { UserFavoriteForumEntity } from "src/entity/forum/forumFavorited.entity";
 import { ForumTagEntity } from "src/entity/forum/forumTag.entity";
 import { ReplyEntity } from "src/entity/reply/reply.entity";
+import { UserFavoriteReplyEntity } from "src/entity/reply/replyFavorited.entity";
 import { ReportEntity } from "src/entity/report/report.entity";
 import { ReportCategoryEntity } from "src/entity/report/reportCategory.entity";
 import { ReportTopicEntity } from "src/entity/report/reportTopic.entity";
@@ -41,7 +44,10 @@ export class typeOrmConfigService implements TypeOrmOptionsFactory {
             EventMemberEntity,
             ReportEntity,
             ReportTopicEntity,
-            ReportCategoryEntity
+            ReportCategoryEntity,
+            UserFavoriteForumEntity,
+            UserFavoriteCommentEntity,
+            UserFavoriteReplyEntity,
         ]     // Table(s) we want to use
       }
   }

@@ -9,16 +9,17 @@ export class CommentsService {
         const favorited = 0;
         const replied = 0;
         const date = new Date();
+        forumID = forumID.split("_")[1];
         
         await this.repository.commentForum(forumID, author, body, incognito, favorited, replied, date, date);
     }
 
-    async favoriteComment(commentID) {
-        await this.repository.favoriteComment(commentID);
+    async favoriteComment(commentID, user) {
+        await this.repository.favoriteComment(commentID, user);
     }
 
-    async unfavoriteComment(commentID) {
-        await this.repository.unfavoriteComment(commentID);
+    async unfavoriteComment(commentID, user) {
+        await this.repository.unfavoriteComment(commentID, user);
     }
 
     async updateComment(commentID, body, incognito) {

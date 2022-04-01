@@ -2,6 +2,7 @@ import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'ty
 import { ForumEntity } from '../forum/forum.entity';
 import { ReplyEntity } from '../reply/reply.entity';
 import { UserEntity } from '../users/user.entity';
+import { UserFavoriteCommentEntity } from './commentFavorited.entity';
 
 
 @Entity('comments')              // create a table name events
@@ -14,6 +15,8 @@ export class CommentsEntity {
         @Column({ name: "liked_comments" })
         liked: number;
 
+        @OneToMany(() => UserFavoriteCommentEntity, userFavorited => userFavorited.comment)
+        favoritedBy: UserFavoriteCommentEntity[];
 
         @Column({ name: "date" })
         date: Date;

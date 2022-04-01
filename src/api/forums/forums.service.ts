@@ -37,15 +37,15 @@ export class ForumsService {
         await this.repository.updateForumView(forumID);
     }
 
-    async forumFavorite(forumID) {
+    async forumFavorite(forumID, user) {
         forumID = forumID.split("_")[1];
 
-        await this.repository.forumFavorite(forumID);
+        await this.repository.forumFavorite(forumID, user);
     }
 
-    async forumUnfavorite(forumID) {
+    async forumUnfavorite(forumID, user) {
         forumID = forumID.split("_")[1];
 
-        await this.repository.forumUnfavorite(forumID);
+        await this.repository.forumUnfavorite(forumID, user);
     }
 }

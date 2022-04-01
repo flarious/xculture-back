@@ -2,6 +2,7 @@ import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'ty
 import { CommentsEntity } from '../comment/comment.entity';
 import { ReportEntity } from '../report/report.entity';
 import { UserEntity } from '../users/user.entity';
+import { UserFavoriteForumEntity } from './forumFavorited.entity';
 import { ForumTagEntity } from './forumTag.entity';
 
 
@@ -38,6 +39,9 @@ export class ForumEntity {
 
         @Column()
         favorite_amount: number;
+
+        @OneToMany(() => UserFavoriteForumEntity, userFavorited => userFavorited.forum)
+        favoritedBy: UserFavoriteForumEntity[];
 
         @ManyToOne(() => UserEntity, user => user.userForums)
         author: UserEntity;

@@ -126,17 +126,19 @@ export class EventsRepository {
             )
             .where("event_id = :id", {id : eventID})
             .execute();
-
         
         const eventMember = await this.connection.createQueryBuilder(EventMemberEntity, "eventMember")
-                .where("eventMember.member = :id", {id: member})
-                .getOne();
+            .select("eventMember.id")
+            .where("eventMember.member = :member_id", {member_id: member})
+            .andWhere("eventMember.event = :event_id", {event_id: eventID})
+            .getOne();
 
         await this.connection.createQueryBuilder()
             .delete()
             .from(EventMemberEntity)
             .where("event = :event", {event : eventID})
             .andWhere("member = :member", {member : member})
+            .where("id = :id", {id: eventMember.id})
             .execute();
 
         await this.connection.createQueryBuilder()
@@ -148,7 +150,5 @@ export class EventsRepository {
             .relation(UserEntity, "memberEvents")
             .of(member)
             .remove(eventMember.id)
-
-        
     }
 }

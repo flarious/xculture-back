@@ -8,8 +8,8 @@ export class RepliesController {
 
     @Post()
     async replyComment (
-        @Param("commentID") commentID: number,
         @Req() request: Request,
+        @Param("commentID") commentID: number,
         @Body("content") body: string,
         @Body("incognito") incognito: boolean
     ) {
@@ -27,15 +27,17 @@ export class RepliesController {
 
     @Put("/:replyID/favorite")
     async favoriteReply(
+        @Req() request: Request,
         @Param('replyID') replyID: number,
     ) {
-        await this.service.favoriteReply(replyID);
+        await this.service.favoriteReply(replyID, request['user'].id);
     }
 
     @Put("/:replyID/unfavorite")
     async unfavoriteReply (
+        @Req() request: Request,
         @Param('replyID') replyID: number,
     ) {
-        await this.service.unfavoriteReply(replyID);
+        await this.service.unfavoriteReply(replyID, request['user'].id);
     }
 }

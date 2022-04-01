@@ -39,6 +39,13 @@ export class UsersController {
         return await this.service.getUserForums(request['user'].id);
     }
 
+    @Get("/forums/favorites")
+    async getUserFavoritedForums(
+        @Req() request: Request,
+    ) {
+        return await this.service.getUserFavoritedForums(request['user'].id);
+    }
+
     @Get("/events")
     async getUserEvents (
         @Req() request: Request,
@@ -46,11 +53,25 @@ export class UsersController {
         return await this.service.getUserEvents(request['user'].id);
     }
 
+    @Get("/events/interested")
+    async getUserInterestedEvents(
+        @Req() request: Request,
+    ) {
+        return await this.service.getUserInterestedEvents(request['user'].id);
+    }
+
     @Get("/communities")
     async getUserCommunities (
         @Req() request: Request,
     ) {
         return await this.service.getUserCommunities(request['user'].id);
+    }
+
+    @Get("/communities/joined")
+    async getUserJoinedCommunities (
+        @Req() request: Request,
+    ) {
+        return await this.service.getUserJoinedCommunities(request['user'].id);
     }
 
     @Put("/unban")

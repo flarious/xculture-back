@@ -1,6 +1,7 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { CommentsEntity } from '../comment/comment.entity';
 import { UserEntity } from '../users/user.entity';
+import { UserFavoriteReplyEntity } from './replyFavorited.entity';
 
 
 @Entity('reply')              // create a table name events
@@ -13,6 +14,8 @@ export class ReplyEntity {
         @Column()
         liked_reply: number;
 
+        @OneToMany(() => UserFavoriteReplyEntity, userFavorited => userFavorited.reply)
+        favoritedBy: UserFavoriteReplyEntity[];
 
         @Column()
         date: Date;
