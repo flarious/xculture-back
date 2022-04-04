@@ -12,14 +12,9 @@ export class UserRepository {
 
     async findOne(uid: string){
         const user = await this.connection.createQueryBuilder(UserEntity, "app_user")
-            .leftJoin("app_user.userForums", "forums")
-            .leftJoin("app_user.userComments", "comments")
-            .leftJoin("app_user.userReplies", "replies")
-            .leftJoin("app_user.userCommunities", "communities")
-            .leftJoin("app_user.memberCommunities", "members")
             .leftJoin("app_user.tags", "tags")
             .leftJoin("tags.tag", "tag")
-            .select(["app_user", "forums", "comments", "replies", "communities", "members", "tags", "tag"])
+            .select(["app_user", "tags", "tag"])
             .where("app_user.id = :id", {id: uid})
             .getOne();
             
