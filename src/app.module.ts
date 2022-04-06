@@ -14,6 +14,8 @@ import { UsersModule } from './api/users/users.module';
 import { PreAuthMiddleware } from './auth/auth.middleware';
 import { FirebaseService } from './auth/firebase.service';
 import { typeOrmConfigService } from './configs/ormconfig';
+import { RoomModule } from './api/room/room.module';
+import { MessagesModule } from './api/messages/messages.module';
 
 
 
@@ -35,6 +37,8 @@ import { typeOrmConfigService } from './configs/ormconfig';
     EventsModule,
     ReportModule,
     AdminModule,
+    RoomModule,
+    MessagesModule,
   ],
   providers: [
     FirebaseService
