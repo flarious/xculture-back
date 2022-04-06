@@ -7,6 +7,7 @@ import { EventMemberEntity } from '../events/eventMember.entity';
 import { EventsEntity } from '../events/events.entity';
 import { ForumEntity } from '../forum/forum.entity';
 import { UserFavoriteForumEntity } from '../forum/forumFavorited.entity';
+import { MessageEntity } from '../message/message.entity';
 import { ReplyEntity } from '../reply/reply.entity';
 import { UserFavoriteReplyEntity } from '../reply/replyFavorited.entity';
 import { ReportEntity } from '../report/report.entity';
@@ -69,6 +70,9 @@ export class UserEntity {
 
         @OneToMany(() => CommunityMemberEntity, member => member.member)
         memberCommunities: CommunityMemberEntity[];
+
+        @OneToMany(() => MessageEntity, message => message.sender)
+        userMessages: MessageEntity[];
 
         @OneToMany(() => EventsEntity, event => event.host)
         userEvents: EventsEntity[];

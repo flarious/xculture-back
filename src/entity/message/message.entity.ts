@@ -1,27 +1,29 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { CommunityRoomEntity } from '../community/communityRoom.entity';
 
+import { UserEntity } from '../users/user.entity';
 
 @Entity('chat')              // create a table name events
 export class MessageEntity {
     
         @PrimaryGeneratedColumn({ name: "message_id" })
-        id: number;
-
+        id: string;
 
         @Column()
-        sent_date: string;
-
+        sent_date: Date;
         
         @Column()
-        message: number;
+        message: string;
 
+        @ManyToOne(() => UserEntity, user => user.userMessages)
+        sender: UserEntity;
 
-        // @Column({ name: "user_id" })
-        // id: number;
+        @ManyToOne(() => CommunityRoomEntity, room => room.messages)
+        room: CommunityRoomEntity;
 
+        @OneToMany(() => MessageEntity, message => message.repliedTo)
+        repliedBy: MessageEntity[];
 
-        // @Column({ name: "community_id" })
-        // id: number;
-
-
+        @ManyToOne(() => MessageEntity, message => message.repliedBy)
+        repliedTo: MessageEntity;
 }

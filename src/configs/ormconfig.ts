@@ -4,11 +4,13 @@ import { CommentsEntity } from "src/entity/comment/comment.entity";
 import { UserFavoriteCommentEntity } from "src/entity/comment/commentFavorited.entity";
 import { CommunityEntity } from "src/entity/community/community.entity";
 import { CommunityMemberEntity } from "src/entity/community/communityMember.entity";
+import { CommunityRoomEntity } from "src/entity/community/communityRoom.entity";
 import { EventMemberEntity } from "src/entity/events/eventMember.entity";
 import { EventsEntity } from "src/entity/events/events.entity";
 import { ForumEntity } from "src/entity/forum/forum.entity";
 import { UserFavoriteForumEntity } from "src/entity/forum/forumFavorited.entity";
 import { ForumTagEntity } from "src/entity/forum/forumTag.entity";
+import { MessageEntity } from "src/entity/message/message.entity";
 import { ReplyEntity } from "src/entity/reply/reply.entity";
 import { UserFavoriteReplyEntity } from "src/entity/reply/replyFavorited.entity";
 import { ReportEntity } from "src/entity/report/report.entity";
@@ -40,6 +42,8 @@ export class typeOrmConfigService implements TypeOrmOptionsFactory {
             UserEntity,
             CommunityEntity,
             CommunityMemberEntity,
+            CommunityRoomEntity,
+            MessageEntity,
             EventsEntity,
             EventMemberEntity,
             ReportEntity,

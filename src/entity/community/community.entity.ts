@@ -2,6 +2,8 @@ import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'ty
 import { ReportEntity } from '../report/report.entity';
 import { UserEntity } from '../users/user.entity';
 import { CommunityMemberEntity } from './communityMember.entity';
+import { CommunityRoomEntity } from './communityRoom.entity';
+
 
 
 @Entity('community')              // create a table name events
@@ -44,6 +46,8 @@ export class CommunityEntity {
         @OneToMany(() => CommunityMemberEntity, member => member.community)
         members: CommunityMemberEntity[];
 
+        @OneToMany(() => CommunityRoomEntity, room => room.community)
+        rooms: CommunityRoomEntity[];
 
         @Column()
         report_amount: number;
