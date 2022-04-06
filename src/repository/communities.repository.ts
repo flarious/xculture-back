@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { CommunityEntity } from "src/entity/community/community.entity";
 import { CommunityMemberEntity } from "src/entity/community/communityMember.entity";
+import { CommunityRoomEntity } from "src/entity/community/communityRoom.entity";
+import { MessageEntity } from "src/entity/message/message.entity";
 import { UserEntity } from "src/entity/users/user.entity";
 import { Connection } from "typeorm";
 import { ReportRepository } from "./report.repository";
@@ -163,14 +165,42 @@ export class CommunitiesRepository {
         .leftJoin("community.owner", "owner")
         .leftJoin("community.members", "members")
         .leftJoin("members.member", "communityMember")
+        .leftJoin("community.rooms", "rooms")
+        .leftJoin("rooms.messages", "messages")
+        .leftJoin("messages.repliedTo", "repliedTo")
+        .leftJoin("messages.sender", "sender")
         .select([
             "community.id",
             "owner.id", 
             "members.id", 
-            "communityMember.id"
+            "communityMember.id",
+            "rooms.id",
+            "messages.id",
+            "repliedTo.id",
+            "sender.id"
         ])
         .where("community.id = :id", {id: id})
         .getOne();
+        
+        for (const room of commu.rooms) {
+            for (const message of room.messages) {
+                await this.connection.createQueryBuilder()
+                .relation(UserEntity, "userMessages")
+                .of(message.sender)
+                .remove(message);
+
+                await this.connection.createQueryBuilder()
+                .relation(MessageEntity, "repliedBy")
+                .of(message.repliedTo)
+                .remove(message);
+            }
+
+            await this.connection.createQueryBuilder()
+            .delete()
+            .from(MessageEntity)
+            .where("room = :id", {id: room.id})
+            .execute();
+        }
         
         for (const member of commu.members) {
             await this.connection.createQueryBuilder()
@@ -186,15 +216,23 @@ export class CommunitiesRepository {
 
         await this.connection.createQueryBuilder()
         .delete()
-        .from(CommunityMemberEntity)
+        .from(CommunityRoomEntity)
         .where("community = :id", {id: commu.id})
         .execute();
 
         await this.connection.createQueryBuilder()
         .delete()
+        .from(CommunityMemberEntity)
+        .where("community = :id", {id: commu.id})
+        .execute();
+        console.log("Delete Member");
+        
+        await this.connection.createQueryBuilder()
+        .delete()
         .from(CommunityEntity)
         .where("id = :id", {id: commu.id})
         .execute();
+        console.log("Delete Commu");
 
         return commu.owner.id;
     }
