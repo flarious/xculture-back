@@ -101,4 +101,45 @@ export class ReportRepository {
         .of(reporter)
         .add(report.identifiers[0].id);
     }
+
+    async deleteReport(type, id) {
+        // Get Report detail to delete
+        const reports = await this.connection.createQueryBuilder(ReportEntity, "reports")
+        .leftJoin("reports.topics", "topics") // Junction between Report and ReportCategory
+        .leftJoin("topics.topic", "topic") // ReportCategory
+        .select([
+            "reports.id", 
+            "topics.id", 
+            "topic.id"
+        ])
+        .where("reports.reportForum = :id", {id: id})
+        .andWhere("reports.reportedType = :reportedType", {reportedType: type})
+        .getMany();
+
+        // Remove every reference on Report (ReportTopic and ReportCategory)
+        for (const report of reports) {
+            // Since report will also be deleted, we can just delete the junction table
+            await this.connection.createQueryBuilder()
+            .delete()
+            .from(ReportTopicEntity)
+            .where("report = :id", {id: report.id})
+            .execute();
+
+            // Remove reference of deleted report's topics on report's category
+            for (const topic of report.topics) {
+                await this.connection.createQueryBuilder()
+                .relation(ReportCategoryEntity, "categoryUsage")
+                .of(topic.topic)
+                .remove(topic);
+            }
+        }
+
+        // Delete report
+        await this.connection.createQueryBuilder()
+        .delete()
+        .from(ReportEntity)
+        .where("reportForum = :id", {id: id})
+        .andWhere("reportedType = :reportedType", {reportedType: type})
+        .execute();
+    }
 }

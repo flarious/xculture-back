@@ -48,4 +48,10 @@ export class ForumsService {
 
         await this.repository.forumUnfavorite(forumID, user);
     }
+
+    async deleteForum(forumID) {
+        forumID = forumID.split("_")[1];
+
+        await this.repository.deleteForum(forumID);
+    }
 }

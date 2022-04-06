@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, Req } from "@nestjs/common";
 import { Request } from "express";
 import { EventsService } from "./events.service";
 
@@ -56,6 +56,13 @@ export class EventsController {
         @Req() request: Request
     ) {
         await this.service.unjoin(eventID, request['user'].id);
+    }
+
+    @Delete("/:eventID")
+    async deleteEvent(
+        @Param("eventID") eventID: string,
+    ) {
+        await this.service.deleteEvent(eventID);
     }
 
     /*

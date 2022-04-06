@@ -3,6 +3,7 @@ import { EventMemberEntity } from "src/entity/events/eventMember.entity";
 import { EventsEntity } from "src/entity/events/events.entity";
 import { UserEntity } from "src/entity/users/user.entity";
 import { Connection } from "typeorm";
+import { ReportRepository } from "./report.repository";
 
 @Injectable()
 export class EventsRepository {
@@ -150,5 +151,55 @@ export class EventsRepository {
             .relation(UserEntity, "memberEvents")
             .of(member)
             .remove(eventMember.id)
+    }
+
+    async deleteEvent(id) {
+        const reportRepository = new ReportRepository(this.connection);
+        reportRepository.deleteReport("event", id);
+
+        // Get event detail to delete
+        const event = await this.connection.createQueryBuilder(EventsEntity, "event")
+        .leftJoin("event.host", "host")
+        .leftJoin("event.members", "members")
+        .leftJoin("members.member", "eventMember")
+        .select([
+            "event.id",
+            "host.id", 
+            "members.id", 
+            "eventMember.id"
+        ])
+        .where("event.id = :id", {id: id})
+        .getOne();
+
+         // Remove reference of deleted people who interest in this event on User
+         for (const member of event.members) {
+            await this.connection.createQueryBuilder()
+            .relation(UserEntity, "memberEvents")
+            .of(member.member)
+            .remove(member);
+        }
+
+        // Remove reference of host on User
+        await this.connection.createQueryBuilder()
+        .relation(UserEntity, "userEvents")
+        .of(event.host)
+        .remove(event);
+
+        // Delete people who interest in this event
+        await this.connection.createQueryBuilder()
+        .delete()
+        .from(EventMemberEntity)
+        .where("event = :id", {id: event.id})
+        .execute();
+
+
+        // Delete Event
+        await this.connection.createQueryBuilder()
+        .delete()
+        .from(EventsEntity)
+        .where("id = :id", {id: event.id})
+        .execute();
+
+        return event.host.id;
     }
 }

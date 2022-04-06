@@ -40,4 +40,10 @@ export class CommunitiesService {
 
         return await this.repository.unjoinCommunity(communityID, member);
     }
+
+    async deleteCommunity(communityID) {
+        communityID = communityID.split("_")[1];
+
+        await this.repository.deleteCommu(communityID);
+    }
 }

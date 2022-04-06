@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, Req } from "@nestjs/common";
 import { Request } from "express";
 import { ForumsService } from "./forums.service";
 
@@ -66,6 +66,13 @@ export class ForumsController {
         @Param("forumID") forumID: number,
     ) {
         await this.service.updateForumView(forumID);
+    }
+
+    @Delete("/:forumID")
+    async deleteForum(
+        @Param("forumID") forumID: string,
+    ) {
+        await this.service.deleteForum(forumID);
     }
 
 }

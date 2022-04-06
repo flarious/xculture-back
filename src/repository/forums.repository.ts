@@ -1,8 +1,13 @@
 import { Injectable } from "@nestjs/common";
+import { CommentsEntity } from "src/entity/comment/comment.entity";
 import { ForumEntity } from "src/entity/forum/forum.entity";
 import { UserFavoriteForumEntity } from "src/entity/forum/forumFavorited.entity";
+import { ForumTagEntity } from "src/entity/forum/forumTag.entity";
+import { ReplyEntity } from "src/entity/reply/reply.entity";
+import { TagEntity } from "src/entity/tags/tag.entity";
 import { UserEntity } from "src/entity/users/user.entity";
 import { Connection } from "typeorm";
+import { ReportRepository } from "./report.repository";
 import { TagsRepository } from "./tags.repository";
 
 @Injectable()
@@ -190,5 +195,91 @@ export class ForumsRepository {
             .relation(ForumEntity, "favoritedBy")
             .of(forumID)
             .remove(unfavoriteForum.id);    
+    }
+
+    async deleteForum(id) {
+        const reportRepository = new ReportRepository(this.connection);
+        reportRepository.deleteReport("forum", id);
+
+        // Get forum detail to delete
+        const forum = await this.connection.createQueryBuilder(ForumEntity, "forum")
+        .leftJoin("forum.comments", "comments")
+        .leftJoin("forum.author", "forumAuthor")
+        .leftJoin("forum.tags", "tags")
+        .leftJoin("comments.author", "commentAuthor")
+        .leftJoin("comments.replies", "replies")
+        .leftJoin("replies.author", "replyAuthor")
+        .leftJoin("tags.tag", "tag")
+        .select([
+            "forum.id", 
+            "forumAuthor.id",
+            "tags.id", "tag.id",
+            "comments.id", 
+            "commentAuthor.id",
+            "replies.id", 
+            "replyAuthor.id"
+        ])
+        .where("forum.id = :forumID", { forumID: id})
+        .getOne();
+
+        // Remove reference of deleted ForumTag on Tag
+        for (const tag of forum.tags) {
+            await this.connection.createQueryBuilder()
+                    .relation(TagEntity, "forumTagUsages")
+                    .of(tag.tag)
+                    .remove(tag);
+        }
+
+        // Since forum will also be deleted, we can just delete the junction table
+        await this.connection.createQueryBuilder()
+        .delete()
+        .from(ForumTagEntity)
+        .where("forum = :id", {id: id})
+        .execute();
+
+        // Remove reference of author on User
+        await this.connection.createQueryBuilder()
+        .relation(UserEntity, "userForums")
+        .of(forum.author)
+        .remove(forum);
+
+        // Delete replies of forum
+        for (const comment of forum.comments) {
+            // Remove reference of comment author on User
+            await this.connection.createQueryBuilder()
+            .relation(UserEntity, "userComments")
+            .of(comment.author)
+            .remove(comment);
+
+            // Remove reference of reply author on User
+            for (const reply of comment.replies) {
+                await this.connection.createQueryBuilder()
+                .relation(UserEntity, "userReplies")
+                .of(reply.author)
+                .remove(reply);
+            }
+
+            await this.connection.createQueryBuilder()
+            .delete()
+            .from(ReplyEntity)
+            .where("comment = :id", {id: comment.id})
+            .execute();
+        }
+
+        // Delete comments of forum
+        await this.connection.createQueryBuilder()
+        .delete()
+        .from(CommentsEntity)
+        .where("forum = :id", {id: forum.id})
+        .execute();
+
+        // Delete forum
+        await this.connection.createQueryBuilder()
+        .delete()
+        .from(ForumEntity)
+        .where("id = :id", {id: forum.id})
+        .execute();
+
+        return forum.author.id;
     }
 }
