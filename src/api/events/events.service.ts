@@ -41,4 +41,10 @@ export class EventsService {
 
         await this.repository.unjoin(eventID, member);
     }
+
+    async deleteEvent(eventID) {
+        eventID = eventID.split("_")[1];
+
+        await this.repository.deleteEvent(eventID);
+    }
 }

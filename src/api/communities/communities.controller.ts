@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, Req } from "@nestjs/common";
 import { Request } from "express";
 import { CommunitiesService } from "./communities.service";
 
@@ -54,6 +54,13 @@ export class CommunitiesController {
         @Req() request: Request
     ) {
         return await this.service.unjoinCommunity(communityID, request['user'].id);
+    }
+
+    @Delete("/:communityID")
+    async deleteCommunity (
+        @Param("communityID") communityID: string,
+    ) {
+        await this.service.deleteCommunity(communityID);
     }
 
     /*

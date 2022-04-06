@@ -3,6 +3,7 @@ import { CommunityEntity } from "src/entity/community/community.entity";
 import { CommunityMemberEntity } from "src/entity/community/communityMember.entity";
 import { UserEntity } from "src/entity/users/user.entity";
 import { Connection } from "typeorm";
+import { ReportRepository } from "./report.repository";
 
 @Injectable()
 export class CommunitiesRepository {
@@ -151,5 +152,50 @@ export class CommunitiesRepository {
             .relation(UserEntity, "memberCommunities")
             .of(member)
             .remove(communityMember.id)
+    }
+
+    async deleteCommu(id) {
+        const reportRepository = new ReportRepository(this.connection);
+        reportRepository.deleteReport("community", id);
+
+        // Get community detail to delete
+        const commu = await this.connection.createQueryBuilder(CommunityEntity, "community")
+        .leftJoin("community.owner", "owner")
+        .leftJoin("community.members", "members")
+        .leftJoin("members.member", "communityMember")
+        .select([
+            "community.id",
+            "owner.id", 
+            "members.id", 
+            "communityMember.id"
+        ])
+        .where("community.id = :id", {id: id})
+        .getOne();
+        
+        for (const member of commu.members) {
+            await this.connection.createQueryBuilder()
+            .relation(UserEntity, "memberCommunities")
+            .of(member.member)
+            .remove(member)
+        }
+
+        await this.connection.createQueryBuilder()
+        .relation(UserEntity, "userCommunities")
+        .of(commu.owner)
+        .remove(commu);
+
+        await this.connection.createQueryBuilder()
+        .delete()
+        .from(CommunityMemberEntity)
+        .where("community = :id", {id: commu.id})
+        .execute();
+
+        await this.connection.createQueryBuilder()
+        .delete()
+        .from(CommunityEntity)
+        .where("id = :id", {id: commu.id})
+        .execute();
+
+        return commu.owner.id;
     }
 }
