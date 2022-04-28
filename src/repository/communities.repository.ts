@@ -3,8 +3,11 @@ import { CommunityEntity } from "src/entity/community/community.entity";
 import { CommunityMemberEntity } from "src/entity/community/communityMember.entity";
 import { CommunityRoomEntity } from "src/entity/community/communityRoom.entity";
 import { MessageEntity } from "src/entity/message/message.entity";
+import { QuestionEntity } from "src/entity/question/question.entity";
 import { UserEntity } from "src/entity/users/user.entity";
 import { Connection } from "typeorm";
+import { AnswerRepository } from "./answers.repository";
+import { QuestionRepository } from "./questions.repository";
 import { ReportRepository } from "./report.repository";
 
 @Injectable()
@@ -32,11 +35,13 @@ export class CommunitiesRepository {
             .leftJoin("community.owner", "owner")
             .leftJoin("community.members", "members")
             .leftJoin("members.member", "member")
+            .leftJoin("community.questions", "questions")
             .select([
                 "community", 
                 "owner.id", "owner.name", "owner.profile_pic", 
                 "members", 
-                "member.id", "member.name", "member.profile_pic"
+                "member.id", "member.name", "member.profile_pic",
+                "questions"
             ])
             .where("community.id = :id", {id: communityID})
             .getOne();
@@ -46,7 +51,7 @@ export class CommunitiesRepository {
         return commu;
     }
 
-    async insert(name, owner, shortdesc, desc, thumbnail, member_amount, date, report_amount) {
+    async insert(name, owner, shortdesc, desc, thumbnail, member_amount, date, report_amount, type, questions) {
         const insertResult = await this.connection.createQueryBuilder()
             .insert()
             .into(CommunityEntity)
@@ -58,7 +63,8 @@ export class CommunitiesRepository {
                     thumbnail: thumbnail,
                     member_amount: member_amount,
                     date: date,
-                    report_amount: report_amount
+                    report_amount: report_amount,
+                    type: type
                 }
             ])
             .execute();
@@ -71,9 +77,15 @@ export class CommunitiesRepository {
             .add(newCommunityID);
 
         await this.joinCommunity(newCommunityID, owner);
+
+        if (type == "private") {
+            const questionRepository = new QuestionRepository(this.connection);
+            questionRepository.create(newCommunityID, questions);
+        }
+        
     }
 
-    async update(communityID, name, shortdesc, desc, thumbnail) {
+    async update(communityID, name, shortdesc, desc, thumbnail, type, questions) {
         await this.connection.createQueryBuilder()
             .update(CommunityEntity)
             .set(
@@ -81,15 +93,36 @@ export class CommunitiesRepository {
                     name: name,
                     shortdesc: shortdesc,
                     desc: desc,
-                    thumbnail: thumbnail
+                    thumbnail: thumbnail,
+                    type: type
                 }
             )
             .where("community_id = :id", {id: communityID})
             .execute();
+
+
+        const questionRepository = new QuestionRepository(this.connection);
+
+        if (type == "private") {
+            questionRepository.update(communityID, questions);
+        }
+        else if (type == "public") {
+            questionRepository.delete(communityID);
+        }
+        
     }
 
     async joinCommunity(communityID, member) {
-        await this.connection.createQueryBuilder()
+        const commu = await this.connection.createQueryBuilder(CommunityEntity, "community")
+        .leftJoin("community.owner", "owner")
+        .select(["community.id", "community.type", "owner.id"])
+        .where("community.id = :id", {id: communityID})
+        .getOne();        
+
+        const type = (commu.type == "private" && member != commu.owner.id) ? "pending" : "member";
+
+        if (type == "member") {
+            await this.connection.createQueryBuilder()
             .update(CommunityEntity)
             .set(
                 {
@@ -98,11 +131,14 @@ export class CommunitiesRepository {
             )
             .where("community_id = :id", {id: communityID})
             .execute();
+        }
 
         const insertResult = await this.connection.createQueryBuilder()
             .insert()
             .into(CommunityMemberEntity)
-            .values({})
+            .values({
+                type: type
+            })
             .execute();
 
         const newCommunityMemberID = insertResult.identifiers[0].id
@@ -117,6 +153,63 @@ export class CommunitiesRepository {
             .of(member)
             .add(newCommunityMemberID)
     }
+
+    async acceptMember(communityID, member) {
+        await this.connection.createQueryBuilder()
+        .update(CommunityMemberEntity)
+        .set({
+            type: "member",
+        })
+        .where("community = :communityID", {communityID: communityID})
+        .andWhere("member = :memberID", {memberID: member})
+        .andWhere("type = :pending", {pending: "pending"})
+        .execute();
+
+        await this.connection.createQueryBuilder()
+        .update(CommunityEntity)
+        .set(
+            {
+                member_amount: () => "member_amount + 1"
+            }
+        )
+        .where("community_id = :id", {id: communityID})
+        .execute();
+
+        const answerRepository = new AnswerRepository(this.connection);
+        answerRepository.deleteUserAnswer(communityID, member);
+    }
+
+    
+    async declineMember(communityID, member) {
+        const communityMember = await this.connection.createQueryBuilder(CommunityMemberEntity, "communityMember")
+            .select("communityMember.id")
+            .where("communityMember.member = :member_id", {member_id: member})
+            .andWhere("communityMember.community = :community_id", {community_id: communityID})
+            .andWhere("communityMember.type = :pending", {pending: "pending"})
+            .getOne();
+
+        const answerRepository = new AnswerRepository(this.connection);
+        await answerRepository.deleteUserAnswer(communityID, member);
+
+        await this.connection.createQueryBuilder()
+            .delete()
+            .from(CommunityMemberEntity)
+            .where("community = :community", {community : communityID})
+            .andWhere("member = :member", {member : member})
+            .andWhere("id = :id", {id: communityMember.id})
+            .execute();
+
+        await this.connection.createQueryBuilder()
+            .relation(CommunityEntity, "members")
+            .of(communityID)
+            .remove(communityMember.id)
+
+        await this.connection.createQueryBuilder()
+            .relation(UserEntity, "memberCommunities")
+            .of(member)
+            .remove(communityMember.id)
+    }
+
 
     async unjoinCommunity(communityID, member) {
         await this.connection.createQueryBuilder()
@@ -142,7 +235,7 @@ export class CommunitiesRepository {
             .from(CommunityMemberEntity)
             .where("community = :community", {community : communityID})
             .andWhere("member = :member", {member : member})
-            .where("id = :id", {id: communityMember.id})
+            .andWhere("id = :id", {id: communityMember.id})
             .execute();
 
         await this.connection.createQueryBuilder()
@@ -209,10 +302,19 @@ export class CommunitiesRepository {
             .remove(member)
         }
 
+        const questionRepository = new QuestionRepository(this.connection);
+        questionRepository.delete(commu.id);
+
         await this.connection.createQueryBuilder()
         .relation(UserEntity, "userCommunities")
         .of(commu.owner)
         .remove(commu);
+
+        await this.connection.createQueryBuilder()
+        .delete()
+        .from(QuestionEntity)
+        .where("community = :id", {id: commu.id})
+        .execute();
 
         await this.connection.createQueryBuilder()
         .delete()
@@ -225,14 +327,12 @@ export class CommunitiesRepository {
         .from(CommunityMemberEntity)
         .where("community = :id", {id: commu.id})
         .execute();
-        console.log("Delete Member");
         
         await this.connection.createQueryBuilder()
         .delete()
         .from(CommunityEntity)
         .where("id = :id", {id: commu.id})
         .execute();
-        console.log("Delete Commu");
 
         return commu.owner.id;
     }

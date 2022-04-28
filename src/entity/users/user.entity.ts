@@ -1,4 +1,5 @@
 import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
+import { AnswerEntity } from '../answer/answer.entity';
 import { CommentsEntity } from '../comment/comment.entity';
 import { UserFavoriteCommentEntity } from '../comment/commentFavorited.entity';
 import { CommunityEntity } from '../community/community.entity';
@@ -73,6 +74,9 @@ export class UserEntity {
 
         @OneToMany(() => MessageEntity, message => message.sender)
         userMessages: MessageEntity[];
+
+        @OneToMany(() => AnswerEntity, answer => answer.respondent)
+        joinAnswers: AnswerEntity[];
 
         @OneToMany(() => EventsEntity, event => event.host)
         userEvents: EventsEntity[];

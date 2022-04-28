@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { UserEntity } from "../users/user.entity";
 import { CommunityEntity } from "./community.entity";
 
@@ -6,6 +6,13 @@ import { CommunityEntity } from "./community.entity";
 export class CommunityMemberEntity {
     @PrimaryGeneratedColumn()
     id: number;
+
+    @Column({
+        type: 'enum',
+        enum: ["pending", "member"],
+        default: "pending"
+    })
+    type: string;
 
     @ManyToOne(() => CommunityEntity, community => community.members)
     community: CommunityEntity;

@@ -25,8 +25,10 @@ export class CommunitiesController {
         @Body("short_description") short_description: string,
         @Body("description") description: string,
         @Body("thumbnail") thumbnail: string,
+        @Body("type") type: string,
+        @Body("questions") questions: string[]
     ) {
-        return await this.service.insert(name, request['user'].id, short_description, description, thumbnail);
+        return await this.service.insert(name, request['user'].id, short_description, description, thumbnail, type, questions);
     }
 
     @Put("/:communityID")
@@ -36,8 +38,10 @@ export class CommunitiesController {
         @Body("short_description") short_description: string,
         @Body("description") description: string,
         @Body("thumbnail") thumbnail: string,
+        @Body("type") type: string,
+        @Body("questions") questions: string[]
     ) {
-        return await this.service.update(communityID, name, short_description, description, thumbnail);
+        return await this.service.update(communityID, name, short_description, description, thumbnail, type, questions);
     }
 
     @Put("/:communityID/join")
@@ -47,6 +51,25 @@ export class CommunitiesController {
     ) {
         return await this.service.joinCommunity(communityID, request['user'].id);
     }
+
+
+    @Put("/:communityID/members/:memberId/accept")
+    async acceptMember (
+        @Param("communityID") communityID: string,
+        @Param("memberId") memberId: string,
+    ) {
+        await this.service.acceptMember(communityID, memberId);
+    }
+
+    
+    @Delete("/:communityID/members/:memberId/decline")
+    async declineMember (
+        @Param("communityID") communityID: string,
+        @Param("memberId") memberId: string,
+    ) {
+        await this.service.declineMember(communityID, memberId);
+    }
+    
 
     @Put("/:communityID/unjoin")
     async unjoinCommunity (

@@ -1,4 +1,6 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { AnswerEntity } from '../answer/answer.entity';
+import { CommunityEntity } from '../community/community.entity';
 
 
 @Entity('question')              // create a table name events
@@ -8,9 +10,15 @@ export class QuestionEntity {
         id: number;
 
 
-        @Column("text", { array: true, default: "{}" })
-        answer: string[];
+        @Column()
+        question: string;
 
+        @OneToMany(() => AnswerEntity, answer => answer.question)
+        answers: AnswerEntity[];
+
+        @ManyToOne(() => CommunityEntity, community => community.questions)
+        community: CommunityEntity;
+        
 
         // @Column({ name: "community_id" })
         // id: number;
