@@ -1,4 +1,5 @@
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { QuestionEntity } from '../question/question.entity';
 import { ReportEntity } from '../report/report.entity';
 import { UserEntity } from '../users/user.entity';
 import { CommunityMemberEntity } from './communityMember.entity';
@@ -16,10 +17,12 @@ export class CommunityEntity {
         @Column()
         name: string;
 
-        /*
-        @Column({ name: "type" })
-        type: boolean;        // Status
-        */
+        @Column({
+                type: 'enum',
+                enum: ["public", "private"],
+                default: "public"
+        })
+        type: string;
 
 
         @Column({ name: "short_desc" })
@@ -54,4 +57,7 @@ export class CommunityEntity {
 
         @OneToMany(() => ReportEntity, report => report.reportCommu)
         reports: ReportEntity[];
+
+        @OneToMany(() => QuestionEntity, question => question.community)
+        questions: QuestionEntity[];
 }

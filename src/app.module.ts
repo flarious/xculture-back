@@ -16,6 +16,8 @@ import { FirebaseService } from './auth/firebase.service';
 import { typeOrmConfigService } from './configs/ormconfig';
 import { RoomModule } from './api/room/room.module';
 import { MessagesModule } from './api/messages/messages.module';
+import { AnswerModule } from './api/answer/answer.module';
+import { QuestionModule } from './api/question/question.module';
 
 
 
@@ -39,6 +41,8 @@ import { MessagesModule } from './api/messages/messages.module';
     AdminModule,
     RoomModule,
     MessagesModule,
+    AnswerModule,
+    QuestionModule
   ],
   providers: [
     FirebaseService
@@ -61,6 +65,10 @@ export class AppModule implements NestModule {
     consumer.apply(PreAuthMiddleware).exclude({ path: '/forums/:forumID/viewed', method: RequestMethod.PUT}).forRoutes({
       path: '/**',
       method: RequestMethod.PUT,
+    });
+    consumer.apply(PreAuthMiddleware).forRoutes({
+      path: '/**',
+      method: RequestMethod.DELETE,
     });
   } 
 }

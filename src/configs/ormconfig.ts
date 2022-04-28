@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from "@nestjs/typeorm";
+import { AnswerEntity } from "src/entity/answer/answer.entity";
 import { CommentsEntity } from "src/entity/comment/comment.entity";
 import { UserFavoriteCommentEntity } from "src/entity/comment/commentFavorited.entity";
 import { CommunityEntity } from "src/entity/community/community.entity";
@@ -11,6 +12,7 @@ import { ForumEntity } from "src/entity/forum/forum.entity";
 import { UserFavoriteForumEntity } from "src/entity/forum/forumFavorited.entity";
 import { ForumTagEntity } from "src/entity/forum/forumTag.entity";
 import { MessageEntity } from "src/entity/message/message.entity";
+import { QuestionEntity } from "src/entity/question/question.entity";
 import { ReplyEntity } from "src/entity/reply/reply.entity";
 import { UserFavoriteReplyEntity } from "src/entity/reply/replyFavorited.entity";
 import { ReportEntity } from "src/entity/report/report.entity";
@@ -52,6 +54,8 @@ export class typeOrmConfigService implements TypeOrmOptionsFactory {
             UserFavoriteForumEntity,
             UserFavoriteCommentEntity,
             UserFavoriteReplyEntity,
+            QuestionEntity,
+            AnswerEntity
         ]     // Table(s) we want to use
       }
   }

@@ -1,4 +1,6 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { QuestionEntity } from '../question/question.entity';
+import { UserEntity } from '../users/user.entity';
 
 @Entity('answer')              // create a table name events
 export class AnswerEntity {
@@ -10,10 +12,16 @@ export class AnswerEntity {
         @Column()
         answer: string;
 
-
         @Column()
         date: Date;
 
+
+        @ManyToOne(() => UserEntity, user => user.joinAnswers)
+        respondent: UserEntity
+
+
+        @ManyToOne(() => QuestionEntity, question => question.answers)
+        question: QuestionEntity;
 
         // @Column({ name: "user_id" })
         // id: string;
