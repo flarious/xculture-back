@@ -31,6 +31,8 @@ export class RoomService {
     }
 
     async deleteRoom(roomId) {
+        roomId = roomId.split("_")[1];
+        
         await this.repository.deleteRoom(roomId);
     }
 }
