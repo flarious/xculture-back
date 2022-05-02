@@ -18,7 +18,7 @@ export class ReplyEntity {
         favoritedBy: UserFavoriteReplyEntity[];
 
         @Column()
-        date: Date;
+        create_date: Date;
 
 
         @Column()
@@ -39,28 +39,4 @@ export class ReplyEntity {
 
         @ManyToOne(() => CommentsEntity, comment => comment.replies)
         comment: CommentsEntity;
-
-        
-
-
-        // @Column({ name: "comment_id" })
-        // id: number;
-
-
-        // @Column({ name: "user_id" })
-        // id: number;
-
-
-        // @Column()
-        // post_update: Date;
-
-
-        // @Column()
-        // update_date: Date;
-
-
-        // @Column()
-        // report_amount: number;
-
-
 }

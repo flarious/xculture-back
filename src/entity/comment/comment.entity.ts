@@ -19,7 +19,7 @@ export class CommentsEntity {
         favoritedBy: UserFavoriteCommentEntity[];
 
         @Column({ name: "date" })
-        date: Date;
+        create_date: Date;
 
 
         @Column()
@@ -48,10 +48,4 @@ export class CommentsEntity {
 
         @OneToMany(() => ReplyEntity, reply => reply.comment)
         replies: ReplyEntity[];
-
-
-        // @Column({ name: "report_amount" })
-        // amount: number;
-
-
 }

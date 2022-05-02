@@ -62,7 +62,8 @@ export class CommunitiesRepository {
                     desc: desc,
                     thumbnail: thumbnail,
                     member_amount: member_amount,
-                    date: date,
+                    create_date: date,
+                    update_date: date,
                     report_amount: report_amount,
                     type: type
                 }
@@ -94,7 +95,8 @@ export class CommunitiesRepository {
                     shortdesc: shortdesc,
                     desc: desc,
                     thumbnail: thumbnail,
-                    type: type
+                    type: type,
+                    update_date: new Date(),
                 }
             )
             .where("community_id = :id", {id: communityID})

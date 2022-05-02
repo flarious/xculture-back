@@ -86,7 +86,7 @@ export class ForumsRepository {
                     incognito: incognito, 
                     viewed: viewed, 
                     favorite_amount: favorite_amount, 
-                    date: date, 
+                    create_date: date, 
                     update_date: update_date,
                     report_amount: report_amount
                 }

@@ -14,7 +14,7 @@ export class ForumEntity {
         id: string;
         
         @Column()
-        date: Date;
+        create_date: Date;
 
         @Column()
         update_date: Date;

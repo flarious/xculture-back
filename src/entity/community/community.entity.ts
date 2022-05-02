@@ -34,7 +34,10 @@ export class CommunityEntity {
 
 
         @Column()
-        date: Date;
+        create_date: Date;
+
+        @Column()
+        update_date: Date;
 
 
         @Column({ name: "thumbnail" })

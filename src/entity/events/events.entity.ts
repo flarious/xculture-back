@@ -11,7 +11,13 @@ export class EventsEntity {
         id: string;
 
         @Column()
-        date: Date;
+        create_date: Date;
+
+        @Column()
+        update_date: Date;
+
+        @Column()
+        event_date: Date;
 
 
         @Column()
