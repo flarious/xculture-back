@@ -55,7 +55,9 @@ export class EventsRepository {
                     thumbnail: thumbnail,
                     location: location,
                     interested_amount: interested_amount,
-                    date: date,
+                    event_date: date,
+                    create_date: new Date(),
+                    update_date: new Date(),
                     report_amount: report_amount
                 }
             ])
@@ -80,7 +82,8 @@ export class EventsRepository {
                     body: body,
                     thumbnail: thumbnail,
                     location: location,
-                    date: date,
+                    event_date: date,
+                    update_date: new Date(),
                 }
             )
             .where("event_id = :id", {id : eventID})

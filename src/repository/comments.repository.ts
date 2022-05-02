@@ -20,7 +20,7 @@ export class CommentsRepository {
                     incognito: incognito,
                     liked: favorited,
                     reply_amount: replied,
-                    date: date,
+                    create_date: date,
                     update_date: update_date
                 }
             )

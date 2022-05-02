@@ -19,7 +19,7 @@ export class RepliesRepository {
                         author: author,
                         incognito: incognito,
                         liked_reply: favorited,
-                        date: date,
+                        create_date: date,
                         update_date: update_date
                     }
                 )
