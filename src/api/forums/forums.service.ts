@@ -9,6 +9,10 @@ export class ForumsService {
         return await this.repository.getForums();
     }
 
+    async getForumsRecommended(userId) {
+        return await this.repository.getForumsRecommended(userId);
+    }
+
     async getForum(forumID) {
         forumID = forumID.split("_")[1];
 

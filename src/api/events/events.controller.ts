@@ -11,6 +11,13 @@ export class EventsController {
         return await this.service.findAll();
     }
 
+    @Get("/recommendation")
+    async getEventsRecommended(
+        @Req() request: Request
+    ) {
+        return await this.service.getEventsRecommended(request['user'].id);
+    }
+
     @Get("/:eventID")
     async getEvent(
         @Param("eventID") eventID: number

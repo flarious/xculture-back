@@ -9,6 +9,10 @@ export class CommunitiesService {
         return await this.repository.findAll();
     }
 
+    async getCommunitiesRecommended(userId) {
+        return await this.repository.getCommunitiesRecommended(userId);
+    }
+
     async findOne(communityID) {
         communityID = communityID.split("_")[1];
 
@@ -42,6 +46,12 @@ export class CommunitiesService {
     }
 
     async declineMember(communityID, member) {
+        communityID = communityID.split("_")[1];
+
+        await this.repository.declineMember(communityID, member);
+    }
+
+    async cancelJoinCommunityRequest(communityID, member) {
         communityID = communityID.split("_")[1];
 
         await this.repository.declineMember(communityID, member);

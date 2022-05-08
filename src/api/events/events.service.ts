@@ -9,6 +9,10 @@ export class EventsService {
         return await this.repository.findAll();
     }
 
+    async getEventsRecommended(userId) {
+        return await this.repository.getEventsRecommended(userId);
+    }
+
     async findOne(eventID) {
         eventID = eventID.split("_")[1];
 
