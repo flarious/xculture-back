@@ -12,6 +12,8 @@ import { MessageEntity } from '../message/message.entity';
 import { ReplyEntity } from '../reply/reply.entity';
 import { UserFavoriteReplyEntity } from '../reply/replyFavorited.entity';
 import { ReportEntity } from '../report/report.entity';
+import { MutualCommunityEntity } from './mutualCommunity.entity';
+import { MutualEventEntity } from './mutualEvent.entity';
 import { UserTagEntity } from './userTag.entity';
 
 
@@ -46,7 +48,7 @@ export class UserEntity {
         userType: string;
 
         @OneToMany(() => UserTagEntity, userTag => userTag.user)
-        tags: UserEntity[];
+        tags: UserTagEntity[];
 
         @OneToMany(() => ForumEntity, forum => forum.author)
         userForums: ForumEntity[];
@@ -71,6 +73,18 @@ export class UserEntity {
 
         @OneToMany(() => CommunityMemberEntity, member => member.member)
         memberCommunities: CommunityMemberEntity[];
+
+        @OneToMany(() => MutualCommunityEntity, mutual => mutual.from)
+        MutualCommunitiesWith: MutualCommunityEntity[]; 
+
+        @OneToMany(() => MutualEventEntity, mutual => mutual.from)
+        MutualEventsWith: MutualEventEntity[];
+
+        @OneToMany(() => MutualCommunityEntity, mutual => mutual.to)
+        MutualCommunitiesTo: MutualCommunityEntity[];
+
+        @OneToMany(() => MutualEventEntity, mutual => mutual.to)
+        MutualEventsTo: MutualEventEntity[];
 
         @OneToMany(() => MessageEntity, message => message.sender)
         userMessages: MessageEntity[];

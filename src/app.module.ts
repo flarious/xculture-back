@@ -57,7 +57,19 @@ export class AppModule implements NestModule {
     consumer.apply(PreAuthMiddleware, AdminMiddleware).forRoutes({
       path: '/admins**',
       method: RequestMethod.ALL,
-    })
+    });
+    consumer.apply(PreAuthMiddleware).forRoutes({
+      path: 'forums/recommendation',
+      method: RequestMethod.GET,
+    });
+    consumer.apply(PreAuthMiddleware).forRoutes({
+      path: 'events/recommendation',
+      method: RequestMethod.GET,
+    });
+    consumer.apply(PreAuthMiddleware).forRoutes({
+      path: 'communities/recommendation',
+      method: RequestMethod.GET,
+    });
     consumer.apply(PreAuthMiddleware).forRoutes({
       path: '/**',
       method: RequestMethod.POST,

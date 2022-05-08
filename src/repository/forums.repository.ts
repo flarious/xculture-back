@@ -33,6 +33,46 @@ export class ForumsRepository {
         return forums;
     }
 
+    async getForumsRecommended(userId) {
+        const user = await this.connection.createQueryBuilder(UserEntity, "user")
+        .leftJoin("user.tags", "tags")
+        .leftJoin("tags.tag", "tag")
+        .select(["user.id", "tags.id", "tag.id"])
+        .where("user.id = :id", {id: userId})
+        .getOne();
+
+        let recommendedForums;
+
+        if(user.tags.length) {
+            const userTags = [];
+
+            for (const tag of user.tags) {
+                userTags.push(tag.tag.id);
+            }
+
+            recommendedForums = await this.connection.createQueryBuilder(ForumEntity, "forums")
+            .leftJoin("forums.author", "forumAuthor")
+            .leftJoin("forums.tags", "tags")
+            .leftJoin("tags.tag", "tag")
+            .select([
+                "forums", 
+                "forumAuthor.id", "forumAuthor.name", "forumAuthor.profile_pic", 
+                "tags", "tag"
+            ])
+            .where("tag.id in (:...userTags)", {userTags: userTags})
+            .getMany();
+
+            for (const forum of recommendedForums) {
+                forum.id = "forum_" + forum.id;
+            }
+        }
+        else {
+            recommendedForums = this.getForums();
+        }
+
+        return recommendedForums;
+    }
+
     async getForum(forumID) {
         const forum = await this.connection.createQueryBuilder(ForumEntity, "forum")
             .leftJoin("forum.author", "forumAuthor")

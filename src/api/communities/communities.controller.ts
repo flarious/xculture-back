@@ -11,6 +11,13 @@ export class CommunitiesController {
         return await this.service.findAll();
     }
 
+    @Get("/recommendation")
+    async getCommunitiesRecommended(
+        @Req() request: Request
+    ) {
+        return await this.service.getCommunitiesRecommended(request['user'].id);
+    }
+
     @Get("/:communityID")
     async getCommunityDetail (
         @Param("communityID") communityID: string,
@@ -69,6 +76,14 @@ export class CommunitiesController {
     ) {
         await this.service.declineMember(communityID, memberId);
     }
+
+    @Delete("/:communityID/cancel")
+    async cancelJoinCommunityRequest (
+        @Param("communityID") communityID: string,
+        @Req() request: Request
+    ) {
+        return await this.service.cancelJoinCommunityRequest(communityID, request['user'].id);
+    }
     
 
     @Put("/:communityID/unjoin")
@@ -85,54 +100,4 @@ export class CommunitiesController {
     ) {
         await this.service.deleteCommunity(communityID);
     }
-
-    /*
-
-    @Put("/:communityID/changeVisibility")
-    async changeVisibility () {
-
-    }
-
-    @Get("/:communityID/report")
-    async getReportDetail () {
-
-    }
-
-    @Post("/:communityID/report")
-    async reportCommunity () {
-
-    }
-
-    // +---+ Filtering member +---+ 
-    @Get("/:communityID/questions")
-    async getCommunityQuestions() {
-
-    }
-
-    @Put("/:communityID/report")
-    async saveUserAnswer() {
-
-    }
-
-    @Get("/:communityID/members/:memberID")
-    async getUsersAnswer() {
-
-    }
-
-    @Put("/:communityID/members/:memberID")
-    async acceptMember() {
-
-    }
-
-    @Delete("/:communityID/members/:memberID")
-    async rejectMember() {
-        
-    }
-
-    // +---+ Member +---+ 
-    @Get("/:communityID/members")
-    async getListOfMember () {
-
-    }
-    */
 }

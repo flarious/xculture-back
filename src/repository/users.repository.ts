@@ -21,6 +21,29 @@ export class UserRepository {
         return user;
     }
 
+    async findOneMutualsCommunities(uid) {
+        const userMutuals = await this.connection.createQueryBuilder(UserEntity, "user")
+        .leftJoin("user.MutualCommunitiesWith", "mutuals")
+        .leftJoin("mutuals.from", "from")
+        .leftJoin("mutuals.to", "to")
+        .select(["user.id", "mutuals", "to.id"])
+        .where("user.id = :id", {id: uid})
+        .getOne();
+
+        return userMutuals;
+    }
+
+    async findOneMutualsEvents(uid) {
+        const userMutuals = await this.connection.createQueryBuilder(UserEntity, "user")
+        .leftJoin("user.MutualEventsWith", "mutuals")
+        .leftJoin("mutuals.to", "to")
+        .select(["user.id", "mutuals", "to.id"])
+        .where("user.id = :id", {id: uid})
+        .getOne();
+
+        return userMutuals;
+    }
+
     async insert(uid: string, email: string, name: string, profile_pic: string, bio: string, banned_amount: number){
         await this.connection.createQueryBuilder()
             .insert().into(UserEntity)

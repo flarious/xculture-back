@@ -19,6 +19,8 @@ import { ReportEntity } from "src/entity/report/report.entity";
 import { ReportCategoryEntity } from "src/entity/report/reportCategory.entity";
 import { ReportTopicEntity } from "src/entity/report/reportTopic.entity";
 import { TagEntity } from "src/entity/tags/tag.entity";
+import { MutualCommunityEntity } from "src/entity/users/mutualCommunity.entity";
+import { MutualEventEntity } from "src/entity/users/mutualEvent.entity";
 import { UserEntity } from "src/entity/users/user.entity";
 import { UserTagEntity } from "src/entity/users/userTag.entity";
 
@@ -55,7 +57,9 @@ export class typeOrmConfigService implements TypeOrmOptionsFactory {
             UserFavoriteCommentEntity,
             UserFavoriteReplyEntity,
             QuestionEntity,
-            AnswerEntity
+            AnswerEntity,
+            MutualCommunityEntity,
+            MutualEventEntity,
         ]     // Table(s) we want to use
       }
   }

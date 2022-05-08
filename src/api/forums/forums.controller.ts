@@ -13,6 +13,13 @@ export class ForumsController {
         return await this.service.getForums();
     }
 
+    @Get("/recommendation")
+    async getForumsRecommended(
+        @Req() request: Request
+    ) {
+        return await this.service.getForumsRecommended(request['user'].id);
+    }
+
     /* Get a forum's detail */
     @Get("/:forumID")
     async getForum(@Param("forumID") forumID: number) {

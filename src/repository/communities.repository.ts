@@ -4,11 +4,13 @@ import { CommunityMemberEntity } from "src/entity/community/communityMember.enti
 import { CommunityRoomEntity } from "src/entity/community/communityRoom.entity";
 import { MessageEntity } from "src/entity/message/message.entity";
 import { QuestionEntity } from "src/entity/question/question.entity";
+import { MutualCommunityEntity } from "src/entity/users/mutualCommunity.entity";
 import { UserEntity } from "src/entity/users/user.entity";
 import { Connection } from "typeorm";
 import { AnswerRepository } from "./answers.repository";
 import { QuestionRepository } from "./questions.repository";
 import { ReportRepository } from "./report.repository";
+import { UserRepository } from "./users.repository";
 
 @Injectable()
 export class CommunitiesRepository {
@@ -133,6 +135,8 @@ export class CommunitiesRepository {
             )
             .where("community_id = :id", {id: communityID})
             .execute();
+
+            this.mutualMember(communityID, member);
         }
 
         const insertResult = await this.connection.createQueryBuilder()
@@ -177,6 +181,8 @@ export class CommunitiesRepository {
         .where("community_id = :id", {id: communityID})
         .execute();
 
+        this.mutualMember(communityID, member);
+
         const answerRepository = new AnswerRepository(this.connection);
         answerRepository.deleteUserAnswer(communityID, member);
     }
@@ -212,6 +218,222 @@ export class CommunitiesRepository {
             .remove(communityMember.id)
     }
 
+    async mutualMember(communityId, newMember) {
+        const commu = await this.connection.createQueryBuilder(CommunityEntity, "commu")
+        .leftJoin("commu.members", "members")
+        .leftJoin("members.member", "member")
+        .select(["commu.id", "members.id", "member.id"])
+        .where("commu.id = :id", {id: communityId})
+        .getOne();
+
+        
+        const userRepository = new UserRepository(this.connection);
+
+        const newMemberMutuals = await userRepository.findOneMutualsCommunities(newMember);
+        const newMemberMutualsList = newMemberMutuals.MutualCommunitiesWith.map(mutual => mutual.to.id);
+
+        const membersMutualsList = [];
+
+        for (const member of commu.members) {
+            const memberMutuals = await userRepository.findOneMutualsCommunities(member.member.id);
+            membersMutualsList.push(memberMutuals.MutualCommunitiesWith.map(mutual => mutual.to.id))
+        }
+
+        for (const member of commu.members) {
+            if (newMemberMutualsList.includes(member.member.id)) {
+                await this.connection.createQueryBuilder()
+                .update(MutualCommunityEntity)
+                .set({
+                    numberOfMutualCommunities: () => "numberOfMutualCommunities + 1"
+                })
+                .where("from = :id", {id: newMember})
+                .andWhere("to = :userId", {userId: member.member.id})
+                .execute();
+            }
+            else {
+                newMemberMutualsList.push(member.member.id);
+
+                const newMutual = await this.connection.createQueryBuilder()
+                .insert()
+                .into(MutualCommunityEntity)
+                .values({
+                    numberOfMutualCommunities: 1
+                })
+                .execute()
+
+                const newMutualId = newMutual.identifiers[0].id;
+
+                await this.connection.createQueryBuilder()
+                .relation(UserEntity, "MutualCommunitiesWith")
+                .of(newMember)
+                .add(newMutualId);
+
+                await this.connection.createQueryBuilder()
+                .relation(UserEntity, "MutualCommunitiesTo")
+                .of(member.member.id)
+                .add(newMutualId);
+            }
+        }
+
+        for (const member of commu.members) {
+            const memberIndex = commu.members.indexOf(member);
+            if (membersMutualsList[memberIndex].includes(newMember)) {
+                await this.connection.createQueryBuilder()
+                .update(MutualCommunityEntity)
+                .set({
+                    numberOfMutualCommunities: () => "numberOfMutualCommunities + 1"
+                })
+                .where("from = :id", {id: member.member.id})
+                .andWhere("to = :userId", {userId: newMember})
+                .execute();
+            }
+            else {
+                membersMutualsList[memberIndex].push(newMember)
+
+                const newMutual = await this.connection.createQueryBuilder()
+                .insert()
+                .into(MutualCommunityEntity)
+                .values({
+                    numberOfMutualCommunities: 1
+                })
+                .execute()
+
+                const newMutualId = newMutual.identifiers[0].id;
+
+                await this.connection.createQueryBuilder()
+                .relation(UserEntity, "MutualCommunitiesWith")
+                .of(member.member.id)
+                .add(newMutualId);
+
+                await this.connection.createQueryBuilder()
+                .relation(UserEntity, "MutualCommunitiesTo")
+                .of(newMember)
+                .add(newMutualId);
+            }
+        }
+    }
+
+    async unMutualMember(communityId, leavingMember) {
+        const commu = await this.connection.createQueryBuilder(CommunityEntity, "commu")
+        .leftJoin("commu.members", "members")
+        .leftJoin("members.member", "member")
+        .select(["commu.id", "members.id", "member.id"])
+        .where("commu.id = :id", {id: communityId})
+        .getOne();
+
+        for (const member of commu.members) {
+            if (member.member.id != leavingMember) {
+                await this.connection.createQueryBuilder()
+                    .update(MutualCommunityEntity)
+                    .set({
+                        numberOfMutualCommunities: () => "numberOfMutualCommunities - 1"
+                    })
+                    .where("from = :id", {id: leavingMember})
+                    .andWhere("to = :userId", {userId: member.member.id})
+                    .execute();
+
+                const mutual = await this.connection.createQueryBuilder(MutualCommunityEntity, "mutual")
+                .where("mutual.from = :id", {id: leavingMember})
+                .andWhere("mutual.to = :userId", {userId: member.member.id})
+                .getOne();
+
+                console.log(mutual);
+
+                if (mutual.numberOfMutualCommunities == 0) {
+                    await this.connection.createQueryBuilder()
+                    .delete()
+                    .from(MutualCommunityEntity)
+                    .where("from = :id", {id: leavingMember})
+                    .andWhere("to = :userId", {userId: member.member.id})
+                    .execute();
+
+                    await this.connection.createQueryBuilder()
+                    .relation(UserEntity, "MutualCommunitiesWith")
+                    .of(leavingMember)
+                    .remove(mutual.id);
+
+                    await this.connection.createQueryBuilder()
+                    .relation(UserEntity, "MutualCommunitiesTo")
+                    .of(member.member.id)
+                    .remove(mutual.id);
+                }
+            }
+        }
+
+        for (const member of commu.members) {
+            if (member.member.id != leavingMember) {
+                await this.connection.createQueryBuilder()
+                    .update(MutualCommunityEntity)
+                    .set({
+                        numberOfMutualCommunities: () => "numberOfMutualCommunities - 1"
+                    })
+                    .where("from = :id", {id: member.member.id})
+                    .andWhere("to = :userId", {userId: leavingMember})
+                    .execute();
+
+                const mutual = await this.connection.createQueryBuilder(MutualCommunityEntity, "mutual")
+                .where("mutual.from = :id", {id: member.member.id})
+                .andWhere("mutual.to = :userId", {userId: leavingMember})
+                .getOne();
+
+                if (mutual.numberOfMutualCommunities == 0) {
+                    await this.connection.createQueryBuilder()
+                    .delete()
+                    .from(MutualCommunityEntity)
+                    .where("from = :id", {id: member.member.id})
+                    .andWhere("to = :userId", {userId: leavingMember})
+                    .execute();
+
+                    await this.connection.createQueryBuilder()
+                    .relation(UserEntity, "MutualCommunitiesWith")
+                    .of(member.member.id)
+                    .remove(mutual.id);
+
+                    await this.connection.createQueryBuilder()
+                    .relation(UserEntity, "MutualCommunitiesTo")
+                    .of(leavingMember)
+                    .remove(mutual.id);
+                }
+            }
+        }
+    }
+
+    async getCommunitiesRecommended(userId) {
+        const userRepository = new UserRepository(this.connection);
+        const user = await userRepository.findOneMutualsCommunities(userId);
+
+        let recommendedCommunities; 
+        
+        if (user.MutualCommunitiesWith.length) {
+            const mutualWith = user.MutualCommunitiesWith.map(mutual => mutual.to.id);
+
+            const joinedCommunities = await userRepository.getUserJoinedCommunities(userId);
+            const joined = await joinedCommunities.map(joined => joined.id.split("_")[1]);
+
+            recommendedCommunities = await this.connection.createQueryBuilder(CommunityEntity, "commus")
+            .leftJoin("commus.owner", "owner")
+            .leftJoin("commus.members", "members")
+            .leftJoin("members.member", "member")
+            .select([
+                "commus", 
+                "owner.id", "owner.name", "owner.profile_pic",
+                "members", 
+                "member.id", "member.name", "member.profile_pic"
+            ])
+            .where("commus.id not in (:...joined)", {joined: joined})
+            .andWhere("member.id in (:...mutualMembers)", {mutualMembers: mutualWith})
+            .getMany();
+
+            for (const community of recommendedCommunities) {
+                community.id = "community_" + community.id;
+            }
+        }
+        else {
+            recommendedCommunities = this.findAll();
+        }
+        
+        return recommendedCommunities;
+    }
 
     async unjoinCommunity(communityID, member) {
         await this.connection.createQueryBuilder()
@@ -224,6 +446,7 @@ export class CommunitiesRepository {
             .where("community_id = :id", {id : communityID})
             .execute();
 
+        this.unMutualMember(communityID, member);
         
         const communityMember = await this.connection.createQueryBuilder(CommunityMemberEntity, "communityMember")
             .select("communityMember.id")
@@ -276,6 +499,29 @@ export class CommunitiesRepository {
         ])
         .where("community.id = :id", {id: id})
         .getOne();
+
+        const mutualMembers = await this.connection.createQueryBuilder(MutualCommunityEntity, "mutuals")
+        .leftJoin("mutuals.from", "from")
+        .leftJoin("mutuals.to", "to")
+        .select(["mutuals", "from.id", "to.id"])
+        .getMany();
+        
+        for (const mutual of mutualMembers) {
+            await this.connection.createQueryBuilder()
+            .relation(UserEntity, "MutualCommunitiesWith")
+            .of(mutual.from.id)
+            .remove(mutual.id);
+
+            await this.connection.createQueryBuilder()
+            .relation(UserEntity, "MutualCommunitiesTo")
+            .of(mutual.to.id)
+            .remove(mutual.id);
+        }
+
+        await this.connection.createQueryBuilder()
+        .delete()
+        .from(MutualCommunityEntity)
+        .execute();
         
         for (const room of commu.rooms) {
             for (const message of room.messages) {
