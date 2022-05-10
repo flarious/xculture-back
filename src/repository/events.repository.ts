@@ -103,6 +103,8 @@ export class EventsRepository {
             .where("event_id = :id", {id : eventID})
             .execute();
 
+        this.mutualMember(eventID, member);
+
         const insertResult = await this.connection.createQueryBuilder()
             .insert()
             .into(EventMemberEntity)
@@ -121,7 +123,7 @@ export class EventsRepository {
             .of(member)
             .add(newEventMemberID)
 
-        this.mutualMember(eventID, member);
+        
     }
 
     async mutualMember(eventID, newMember) {
@@ -303,45 +305,55 @@ export class EventsRepository {
     }
 
     async getEventsRecommended(userId) {
-        if (userId !== undefined) {
-            const userRepository = new UserRepository(this.connection);
-            const user = await userRepository.findOneMutualsEvents(userId);
+        const userRepository = new UserRepository(this.connection);
+        const user = await userRepository.findOneMutualsEvents(userId);
 
-            let recommendedEvents; 
-            
-            if (user.MutualEventsWith.length) {
-                const mutualWith = user.MutualEventsWith.map(mutual => mutual.to.id);
+        const joinedEvents = await userRepository.getUserInterestedEvents(userId);
+        const joined = await joinedEvents.map(joined => joined.id.split("_")[1]);
 
-                const joinedEvents = await userRepository.getUserInterestedEvents(userId);
-                const joined = await joinedEvents.map(joined => joined.id.split("_")[1]);
+        let recommendedEvents; 
+        
+        if (user.MutualEventsWith.length) {
+            const mutualWith = user.MutualEventsWith.map(mutual => mutual.to.id);
 
-                recommendedEvents = await this.connection.createQueryBuilder(EventsEntity, "events")
-                .leftJoin("events.host", "host")
-                .leftJoin("events.members", "members")
-                .leftJoin("members.member", "member")
-                .select([
-                    "events", 
-                    "host.id", "host.name", "host.profile_pic",
-                    "members", 
-                    "member.id", "member.name", "member.profile_pic"
-                ])
-                .where("events.id not in (:...joined)", {joined: joined})
-                .andWhere("member.id in (:...mutualMembers)", {mutualMembers: mutualWith})
-                .getMany();
+            recommendedEvents = await this.connection.createQueryBuilder(EventsEntity, "events")
+            .leftJoin("events.host", "host")
+            .leftJoin("events.members", "members")
+            .leftJoin("members.member", "member")
+            .select([
+                "events", 
+                "host.id", "host.name", "host.profile_pic",
+                "members", 
+                "member.id", "member.name", "member.profile_pic"
+            ])
+            .where("events.id not in (:...joined)", {joined: joined})
+            .andWhere("member.id in (:...mutualMembers)", {mutualMembers: mutualWith})
+            .getMany();
 
-                for (const event of recommendedEvents) {
-                    event.id = "event_" + event.id;
-                }
+            for (const event of recommendedEvents) {
+                event.id = "event_" + event.id;
             }
-            else {
-                recommendedEvents = this.findAll();
-            }
-            
-            return recommendedEvents;
         }
         else {
-            return this.findAll();
+            recommendedEvents = await this.connection.createQueryBuilder(EventsEntity, "events")
+            .leftJoin("events.host", "host")
+            .leftJoin("events.members", "members")
+            .leftJoin("members.member", "member")
+            .select([
+                "events", 
+                "host.id", "host.name", "host.profile_pic",
+                "members", 
+                "member.id", "member.name", "member.profile_pic"
+            ])
+            .where("events.id not in (:...joined)", {joined: joined})
+            .getMany();
+
+            for (const event of recommendedEvents) {
+                event.id = "event_" + event.id;
+            }
         }
+        
+        return recommendedEvents;
     }
 
     async unjoin(eventID, member) {

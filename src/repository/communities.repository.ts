@@ -402,13 +402,13 @@ export class CommunitiesRepository {
         const userRepository = new UserRepository(this.connection);
         const user = await userRepository.findOneMutualsCommunities(userId);
 
+        const joinedCommunities = await userRepository.getUserJoinedCommunities(userId);
+        const joined = await joinedCommunities.map(joined => joined.id.split("_")[1]);
+
         let recommendedCommunities; 
         
         if (user.MutualCommunitiesWith.length) {
             const mutualWith = user.MutualCommunitiesWith.map(mutual => mutual.to.id);
-
-            const joinedCommunities = await userRepository.getUserJoinedCommunities(userId);
-            const joined = await joinedCommunities.map(joined => joined.id.split("_")[1]);
 
             recommendedCommunities = await this.connection.createQueryBuilder(CommunityEntity, "commus")
             .leftJoin("commus.owner", "owner")
@@ -429,7 +429,22 @@ export class CommunitiesRepository {
             }
         }
         else {
-            recommendedCommunities = this.findAll();
+            recommendedCommunities = await this.connection.createQueryBuilder(CommunityEntity, "commus")
+            .leftJoin("commus.owner", "owner")
+            .leftJoin("commus.members", "members")
+            .leftJoin("members.member", "member")
+            .select([
+                "commus", 
+                "owner.id", "owner.name", "owner.profile_pic",
+                "members", 
+                "member.id", "member.name", "member.profile_pic"
+            ])
+            .where("commus.id not in (:...joined)", {joined: joined})
+            .getMany();
+
+            for (const community of recommendedCommunities) {
+                community.id = "community_" + community.id;
+            }
         }
         
         return recommendedCommunities;
