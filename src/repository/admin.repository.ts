@@ -593,8 +593,6 @@ export class AdminRepository {
             .getMany();
         }
 
-        console.log(reports);
-
         for (const report of reports) {
             report.id = "report_" + report.id;
         }

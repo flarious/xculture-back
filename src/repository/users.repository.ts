@@ -202,6 +202,7 @@ export class UserRepository {
                 "owner.id", "owner.name", "owner.profile_pic"
             ])
             .where("userJoined.id = :id", {id: uid})
+            .andWhere("members.type = :type", {type: "member"})
             .getMany();
 
         for (const commu of commus) {
