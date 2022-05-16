@@ -78,8 +78,6 @@ export class AnswerRepository {
 
 
         for (const answer of userAnswers) {
-            console.log(answer.respondent);
-
             await this.connection.createQueryBuilder()
             .relation(QuestionEntity, "answers")
             .of(answer.question)

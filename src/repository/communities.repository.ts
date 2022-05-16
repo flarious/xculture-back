@@ -337,8 +337,6 @@ export class CommunitiesRepository {
                 .andWhere("mutual.to = :userId", {userId: member.member.id})
                 .getOne();
 
-                console.log(mutual);
-
                 if (mutual.numberOfMutualCommunities == 0) {
                     await this.connection.createQueryBuilder()
                     .delete()
@@ -407,7 +405,7 @@ export class CommunitiesRepository {
 
         let recommendedCommunities; 
         
-        if (user.MutualCommunitiesWith.length) {
+        if (user.MutualCommunitiesWith.length != 0 && joined.length != 0) {
             const mutualWith = user.MutualCommunitiesWith.map(mutual => mutual.to.id);
 
             recommendedCommunities = await this.connection.createQueryBuilder(CommunityEntity, "commus")
@@ -428,7 +426,7 @@ export class CommunitiesRepository {
                 community.id = "community_" + community.id;
             }
         }
-        else {
+        else if (user.MutualCommunitiesWith.length == 0 && joined.length != 0) {
             recommendedCommunities = await this.connection.createQueryBuilder(CommunityEntity, "commus")
             .leftJoin("commus.owner", "owner")
             .leftJoin("commus.members", "members")
@@ -446,8 +444,63 @@ export class CommunitiesRepository {
                 community.id = "community_" + community.id;
             }
         }
+        else {
+            recommendedCommunities = await this.findAll();
+        }
+
+        if (recommendedCommunities.length == 0) {
+            recommendedCommunities = await this.findAll();
+        }
         
         return recommendedCommunities;
+    }
+
+    async unMutualAll(communityId) {
+        const commu = await this.connection.createQueryBuilder(CommunityEntity, "commu")
+        .leftJoin("commu.members", "members")
+        .leftJoin("members.member", "member")
+        .select(["commu.id", "members.id", "member.id"])
+        .where("commu.id = :id", {id: communityId})
+        .getOne();
+
+        for (const member1 of commu.members) {
+            for (const member2 of commu.members) {
+                if (member1.member.id != member2.member.id) {
+                    await this.connection.createQueryBuilder()
+                    .update(MutualCommunityEntity)
+                    .set({
+                        numberOfMutualCommunities: () => "numberOfMutualCommunities - 1"
+                    })
+                    .where("from = :id", {id: member1.member.id})
+                    .andWhere("to = :userId", {userId: member2.member.id})
+                    .execute();
+
+                    const mutual = await this.connection.createQueryBuilder(MutualCommunityEntity, "mutual")
+                    .where("mutual.from = :id", {id: member1.member.id})
+                    .andWhere("mutual.to = :userId", {userId: member2.member.id})
+                    .getOne();
+
+                    if (mutual.numberOfMutualCommunities == 0) {
+                        await this.connection.createQueryBuilder()
+                        .delete()
+                        .from(MutualCommunityEntity)
+                        .where("from = :id", {id: member1.member.id})
+                        .andWhere("to = :userId", {userId: member2.member.id})
+                        .execute();
+
+                        await this.connection.createQueryBuilder()
+                        .relation(UserEntity, "MutualCommunitiesWith")
+                        .of(member1.member.id)
+                        .remove(mutual.id);
+
+                        await this.connection.createQueryBuilder()
+                        .relation(UserEntity, "MutualCommunitiesTo")
+                        .of(member2.member.id)
+                        .remove(mutual.id);
+                    }
+                }
+            }
+        }
     }
 
     async unjoinCommunity(communityID, member) {
@@ -515,28 +568,7 @@ export class CommunitiesRepository {
         .where("community.id = :id", {id: id})
         .getOne();
 
-        const mutualMembers = await this.connection.createQueryBuilder(MutualCommunityEntity, "mutuals")
-        .leftJoin("mutuals.from", "from")
-        .leftJoin("mutuals.to", "to")
-        .select(["mutuals", "from.id", "to.id"])
-        .getMany();
-        
-        for (const mutual of mutualMembers) {
-            await this.connection.createQueryBuilder()
-            .relation(UserEntity, "MutualCommunitiesWith")
-            .of(mutual.from.id)
-            .remove(mutual.id);
-
-            await this.connection.createQueryBuilder()
-            .relation(UserEntity, "MutualCommunitiesTo")
-            .of(mutual.to.id)
-            .remove(mutual.id);
-        }
-
-        await this.connection.createQueryBuilder()
-        .delete()
-        .from(MutualCommunityEntity)
-        .execute();
+        await this.unMutualAll(commu.id);
         
         for (const room of commu.rooms) {
             for (const message of room.messages) {

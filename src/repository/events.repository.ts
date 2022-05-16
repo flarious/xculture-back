@@ -304,6 +304,54 @@ export class EventsRepository {
         }
     }
 
+    async unMutualAll(eventID) {
+        const event = await this.connection.createQueryBuilder(EventsEntity, "event")
+        .leftJoin("event.members", "members")
+        .leftJoin("members.member", "member")
+        .select(["event.id", "members.id", "member.id"])
+        .where("event.id = :id", {id: eventID})
+        .getOne();
+
+        for (const member1 of event.members) {
+            for (const member2 of event.members) {
+                if (member1.member.id != member2.member.id) {
+                    await this.connection.createQueryBuilder()
+                    .update(MutualEventEntity)
+                    .set({
+                        numberOfMutualEvents: () => "numberOfMutualEvents - 1"
+                    })
+                    .where("from = :id", {id: member1.member.id})
+                    .andWhere("to = :userId", {userId: member2.member.id})
+                    .execute();
+
+                    const mutual = await this.connection.createQueryBuilder(MutualEventEntity, "mutual")
+                    .where("mutual.from = :id", {id: member1.member.id})
+                    .andWhere("mutual.to = :userId", {userId: member2.member.id})
+                    .getOne();
+
+                    if (mutual.numberOfMutualEvents == 0) {
+                        await this.connection.createQueryBuilder()
+                        .delete()
+                        .from(MutualEventEntity)
+                        .where("from = :id", {id: member1.member.id})
+                        .andWhere("to = :userId", {userId: member2.member.id})
+                        .execute();
+
+                        await this.connection.createQueryBuilder()
+                        .relation(UserEntity, "MutualEventsWith")
+                        .of(member1.member.id)
+                        .remove(mutual.id);
+
+                        await this.connection.createQueryBuilder()
+                        .relation(UserEntity, "MutualEventsTo")
+                        .of(member2.member.id)
+                        .remove(mutual.id);
+                    }
+                }
+            }
+        }
+    }
+
     async getEventsRecommended(userId) {
         const userRepository = new UserRepository(this.connection);
         const user = await userRepository.findOneMutualsEvents(userId);
@@ -313,7 +361,7 @@ export class EventsRepository {
 
         let recommendedEvents; 
         
-        if (user.MutualEventsWith.length) {
+        if (user.MutualEventsWith.length != 0 && joined.length != 0) {
             const mutualWith = user.MutualEventsWith.map(mutual => mutual.to.id);
 
             recommendedEvents = await this.connection.createQueryBuilder(EventsEntity, "events")
@@ -334,7 +382,7 @@ export class EventsRepository {
                 event.id = "event_" + event.id;
             }
         }
-        else {
+        else if (user.MutualEventsWith.length == 0 && joined.length != 0) {
             recommendedEvents = await this.connection.createQueryBuilder(EventsEntity, "events")
             .leftJoin("events.host", "host")
             .leftJoin("events.members", "members")
@@ -351,6 +399,13 @@ export class EventsRepository {
             for (const event of recommendedEvents) {
                 event.id = "event_" + event.id;
             }
+        }
+        else {
+            recommendedEvents = await this.findAll();
+        }
+
+        if (recommendedEvents.length == 0) {
+            recommendedEvents = await this.findAll();
         }
         
         return recommendedEvents;
@@ -412,28 +467,7 @@ export class EventsRepository {
         .where("event.id = :id", {id: id})
         .getOne();
         
-        const mutualMembers = await this.connection.createQueryBuilder(MutualEventEntity, "mutuals")
-        .leftJoin("mutuals.from", "from")
-        .leftJoin("mutuals.to", "to")
-        .select(["mutuals", "from.id", "to.id"])
-        .getMany();
-        
-        for (const mutual of mutualMembers) {
-            await this.connection.createQueryBuilder()
-            .relation(UserEntity, "MutualEventsWith")
-            .of(mutual.from.id)
-            .remove(mutual.id);
-
-            await this.connection.createQueryBuilder()
-            .relation(UserEntity, "MutualEventsTo")
-            .of(mutual.to.id)
-            .remove(mutual.id);
-        }
-
-        await this.connection.createQueryBuilder()
-        .delete()
-        .from(MutualEventEntity)
-        .execute();
+        await this.unMutualAll(event.id);
 
          // Remove reference of deleted people who interest in this event on User
          for (const member of event.members) {

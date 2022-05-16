@@ -7,6 +7,8 @@ import { ReplyEntity } from "src/entity/reply/reply.entity";
 import { TagEntity } from "src/entity/tags/tag.entity";
 import { UserEntity } from "src/entity/users/user.entity";
 import { Connection } from "typeorm";
+import { CommentsRepository } from "./comments.repository";
+import { RepliesRepository } from "./replies.repository";
 import { ReportRepository } from "./report.repository";
 import { TagsRepository } from "./tags.repository";
 
@@ -67,6 +69,10 @@ export class ForumsRepository {
             }
         }
         else {
+            recommendedForums = this.getForums();
+        }
+
+        if (recommendedForums.length == 0) {
             recommendedForums = this.getForums();
         }
 
@@ -243,24 +249,55 @@ export class ForumsRepository {
 
         // Get forum detail to delete
         const forum = await this.connection.createQueryBuilder(ForumEntity, "forum")
-        .leftJoin("forum.comments", "comments")
         .leftJoin("forum.author", "forumAuthor")
         .leftJoin("forum.tags", "tags")
+        .leftJoin("forum.favoritedBy", "forumFavoritedBy")
+        .leftJoin("forumFavoritedBy.user", "favoritedForumUser")
+        .leftJoin("forum.comments", "comments")
         .leftJoin("comments.author", "commentAuthor")
+        .leftJoin("comments.favoritedBy", "commentFavoritedBy")
+        .leftJoin("commentFavoritedBy.user", "favoritedCommentUser")
         .leftJoin("comments.replies", "replies")
         .leftJoin("replies.author", "replyAuthor")
+        .leftJoin("replies.favoritedBy", "replyFavoritedBy")
+        .leftJoin("replyFavoritedBy.user", "favoritedReplyUser")
         .leftJoin("tags.tag", "tag")
         .select([
             "forum.id", 
             "forumAuthor.id",
             "tags.id", "tag.id",
+            "forumFavoritedBy.id",
+            "favoritedForumUser.id",
             "comments.id", 
-            "commentAuthor.id",
+            "commentAuthor.id", 
+            "commentFavoritedBy.id",
+            "favoritedCommentUser.id",
             "replies.id", 
-            "replyAuthor.id"
+            "replyAuthor.id",
+            "replyFavoritedBy.id",
+            "favoritedReplyUser.id"
         ])
         .where("forum.id = :forumID", { forumID: id})
         .getOne();
+
+        const commentRepository = new CommentsRepository(this.connection);
+        const replyRepository = new RepliesRepository(this.connection);
+
+        for (const comment of forum.comments) {
+            for (const reply of comment.replies) {
+                for (const userFavoriteReply of reply.favoritedBy) {
+                    await replyRepository.unfavoriteReply(reply.id, userFavoriteReply.user.id);
+                }
+            }
+
+            for (const userFavoriteComment of comment.favoritedBy) {
+                await commentRepository.unfavoriteComment(comment.id, userFavoriteComment.user.id);
+            }
+        }
+
+        for (const userFavoriteForum of forum.favoritedBy) {
+            await this.forumUnfavorite(forum.id, userFavoriteForum.user.id);
+        }
 
         // Remove reference of deleted ForumTag on Tag
         for (const tag of forum.tags) {
